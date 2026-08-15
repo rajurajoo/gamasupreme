@@ -1,6 +1,8 @@
 // Prisma schema for GAMA SUPREME ERP.
-// Uses SQLite for local dev but sticks to standard types/relations so it
-// can be pointed at Postgres later by just changing the datasource provider.
+// Production datasource is Postgres (Railway). For local dev without a
+// Postgres instance, temporarily switch provider to "sqlite" and point
+// DATABASE_URL at a local file, but always revert to "postgresql" before
+// committing/deploying.
 
 generator client {
   provider = "prisma-client-js"
@@ -160,8 +162,10 @@ model Quotation {
   status     String   @default("draft") // "draft" | "sent" | "accepted" | "rejected"
   notes      String?
   // Door Manufacturing job stage tracker: Measurement -> Production -> QC -> Delivery.
-  jobStage   String?  @default("Measurement")
-  createdAt  DateTime @default(now())
+  jobStage        String?  @default("Measurement")
+  discountPercent Float    @default(0)
+  vatRate         Float    @default(5) // UAE standard VAT rate (%), for FTA e-invoicing prep
+  createdAt       DateTime @default(now())
 
   items    QuotationItem[]
   invoices Invoice[]
@@ -198,6 +202,7 @@ model Invoice {
   dueDate     DateTime
   amountPaid  Float     @default(0)
   vatRate     Float     @default(5) // UAE standard VAT rate (%), for FTA e-invoicing prep
+  discountPercent Float @default(0) // carried over from the source quotation, applied to subtotal before VAT
   createdAt   DateTime  @default(now())
 
   items          InvoiceItem[]

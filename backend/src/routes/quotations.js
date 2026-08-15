@@ -7,8 +7,15 @@ const router = express.Router();
 router.use(requireAuth);
 
 function withTotals(q) {
-  const total = q.items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
-  return { ...q, total };
+  const subtotal = q.items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
+  const discountPercent = q.discountPercent != null ? q.discountPercent : 0;
+  const discountAmount = Math.round(subtotal * (discountPercent / 100) * 100) / 100;
+  const afterDiscount = Math.round((subtotal - discountAmount) * 100) / 100;
+  const vatRate = q.vatRate != null ? q.vatRate : 5;
+  const vatAmount = Math.round(afterDiscount * (vatRate / 100) * 100) / 100;
+  const totalWithVat = Math.round((afterDiscount + vatAmount) * 100) / 100;
+  // total kept for backward compatibility (== subtotal)
+  return { ...q, subtotal, total: subtotal, discountPercent, discountAmount, afterDiscount, vatRate, vatAmount, totalWithVat };
 }
 
 const include = { items: { include: { product: true } }, customer: true, project: true, business: true };
@@ -32,7 +39,7 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', requireBusiness, requireRole('admin', 'sales_staff'), async (req, res) => {
-  const { customerId, jobType, notes, items, projectId } = req.body;
+  const { customerId, jobType, notes, items, projectId, discountPercent } = req.body;
   if (!customerId || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'customerId and at least one item required' });
   }
@@ -50,6 +57,7 @@ router.post('/', requireBusiness, requireRole('admin', 'sales_staff'), async (re
         jobType: jobType || 'standard',
         notes,
         jobStage: business.code === 'DM' ? 'Measurement' : null,
+        discountPercent: discountPercent != null && discountPercent !== '' ? Number(discountPercent) : 0,
         items: {
           create: items.map((i) => ({
             description: i.description,
@@ -70,10 +78,15 @@ router.post('/', requireBusiness, requireRole('admin', 'sales_staff'), async (re
 });
 
 router.put('/:id', requireRole('admin', 'sales_staff'), async (req, res) => {
-  const { status, notes, jobStage } = req.body;
+  const { status, notes, jobStage, discountPercent } = req.body;
   const q = await prisma.quotation.update({
     where: { id: Number(req.params.id) },
-    data: { status, notes, jobStage },
+    data: {
+      status,
+      notes,
+      jobStage,
+      discountPercent: discountPercent != null && discountPercent !== '' ? Number(discountPercent) : undefined,
+    },
     include,
   });
   res.json(withTotals(q));

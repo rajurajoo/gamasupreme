@@ -17,6 +17,7 @@ export default function QuotationForm() {
   const [jobType, setJobType] = useState('standard');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState([{ ...emptyItem }]);
+  const [discountPercent, setDiscountPercent] = useState(0);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -41,13 +42,17 @@ export default function QuotationForm() {
   function addItem() { setItems([...items, { ...emptyItem }]); }
   function removeItem(idx) { setItems(items.filter((_, i) => i !== idx)); }
 
-  const total = items.reduce((sum, i) => sum + (Number(i.qty) || 0) * (Number(i.unitPrice) || 0), 0);
+  const subtotal = items.reduce((sum, i) => sum + (Number(i.qty) || 0) * (Number(i.unitPrice) || 0), 0);
+  const discountAmount = subtotal * ((Number(discountPercent) || 0) / 100);
+  const afterDiscount = subtotal - discountAmount;
+  const vatAmount = afterDiscount * 0.05;
+  const totalWithVat = afterDiscount + vatAmount;
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
     try {
-      const q = await api.post('/quotations', { customerId, jobType, notes, items, projectId: projectId || undefined });
+      const q = await api.post('/quotations', { customerId, jobType, notes, items, projectId: projectId || undefined, discountPercent });
       navigate(`/quotations/${q.id}`);
     } catch (err) {
       setError(err.message);
@@ -130,7 +135,18 @@ export default function QuotationForm() {
           </table>
           <button type="button" className="btn small secondary" onClick={addItem}>+ Add Item</button>
 
-          <div className="totals">Total: <strong>{money(total)}</strong></div>
+          <div>
+            <label>Discount %</label>
+            <input type="number" step="0.01" min="0" max="100" value={discountPercent} onChange={(e) => setDiscountPercent(e.target.value)} style={{ width: 100 }} />
+          </div>
+
+          <div className="totals">
+            Subtotal: {money(subtotal)} (AED) &nbsp;
+            Discount ({Number(discountPercent) || 0}%): -{money(discountAmount)} (AED) &nbsp;
+            After Discount: {money(afterDiscount)} (AED) &nbsp;
+            VAT (5%): {money(vatAmount)} (AED) &nbsp;
+            Total: <strong>{money(totalWithVat)} (AED)</strong>
+          </div>
           {error && <div className="error-msg">{error}</div>}
           <button className="btn" style={{ marginTop: 12 }} type="submit">Create Quotation</button>
         </form>

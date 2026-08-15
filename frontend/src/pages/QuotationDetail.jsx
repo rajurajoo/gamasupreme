@@ -76,7 +76,13 @@ export default function QuotationDetail() {
             ))}
           </tbody>
         </table>
-        <div className="totals">Total: <strong>{money(q.total)}</strong></div>
+        <div className="totals">
+          Subtotal: {money(q.subtotal)} (AED) &nbsp;
+          Discount ({q.discountPercent}%): -{money(q.discountAmount)} (AED) &nbsp;
+          After Discount: {money(q.afterDiscount)} (AED) &nbsp;
+          VAT ({q.vatRate}%): {money(q.vatAmount)} (AED) &nbsp;
+          Total: <strong>{money(q.totalWithVat)} (AED)</strong>
+        </div>
       </div>
 
       {isDoorMfg && (

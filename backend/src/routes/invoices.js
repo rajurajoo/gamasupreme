@@ -7,12 +7,16 @@ const router = express.Router();
 router.use(requireAuth);
 
 function withTotals(inv) {
-  const total = inv.items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
+  const subtotal = inv.items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
+  const discountPercent = inv.discountPercent != null ? inv.discountPercent : 0;
+  const discountAmount = Math.round(subtotal * (discountPercent / 100) * 100) / 100;
+  const afterDiscount = Math.round((subtotal - discountAmount) * 100) / 100;
   const vatRate = inv.vatRate != null ? inv.vatRate : 5;
-  const vatAmount = Math.round(total * (vatRate / 100) * 100) / 100;
-  const totalWithVat = Math.round((total + vatAmount) * 100) / 100;
+  const vatAmount = Math.round(afterDiscount * (vatRate / 100) * 100) / 100;
+  const totalWithVat = Math.round((afterDiscount + vatAmount) * 100) / 100;
   const balance = totalWithVat - inv.amountPaid;
-  return { ...inv, total, vatRate, vatAmount, totalWithVat, balance };
+  // total kept for backward compatibility (== subtotal)
+  return { ...inv, subtotal, total: subtotal, discountPercent, discountAmount, afterDiscount, vatRate, vatAmount, totalWithVat, balance };
 }
 
 const include = {
@@ -71,6 +75,7 @@ router.post('/from-quotation/:quotationId', requireRole('admin', 'sales_staff'),
         customerId: quotation.customerId,
         projectId: quotation.projectId,
         dueDate: new Date(dueDate),
+        discountPercent: quotation.discountPercent != null ? quotation.discountPercent : 0,
         items: {
           create: quotation.items.map((i) => ({
             description: i.description,

@@ -17,6 +17,7 @@ const projectRoutes = require('./routes/projects');
 const productRoutes = require('./routes/products');
 const supplierRoutes = require('./routes/suppliers');
 const purchaseOrderRoutes = require('./routes/purchaseOrders');
+const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
@@ -40,6 +41,7 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/purchase-orders', purchaseOrderRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
