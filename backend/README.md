@@ -1,0 +1,3 @@
+# GAMA SUPREME Backend
+
+This backend now uses PostgreSQL (via Prisma) instead of SQLite, so local development requires a `DATABASE_URL` pointing at a Postgres instance — either a local Postgres server (e.g. `postgresql://postgres:postgres@localhost:5432/gama_supreme`) or a Railway-hosted Postgres database (copy the connection string from the Railway Postgres plugin). Copy `.env.example` to `.env`, fill in `DATABASE_URL` (and `JWT_SECRET`, `PORT`, `ALLOWED_ORIGIN` as needed), then run `npx prisma migrate dev` to create the schema and `npm run seed` to load sample data before starting the server with `npm run dev`.

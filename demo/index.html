@@ -1,0 +1,418 @@
+<!doctype html>
+<title>GAMA SUPREME Walkthrough</title>
+<style>
+  :root {
+    --ground: #f6f4ef;
+    --surface: #ffffff;
+    --surface-2: #edeae1;
+    --ink: #1c1a16;
+    --ink-soft: #55503f;
+    --ink-faint: #8b8574;
+    --line: #ddd7c8;
+    --brass: #a9762c;
+    --brass-ink: #6e4c1a;
+    --brass-soft: #f1e3c8;
+    --navy: #1f2a3c;
+    --navy-soft: #eef1f5;
+    --good: #2f6b4f;
+    --good-soft: #e3ede7;
+    --warn: #a3591c;
+    --warn-soft: #f4e6d6;
+    --shadow: 0 1px 2px rgba(28,26,22,0.06), 0 8px 24px -12px rgba(28,26,22,0.18);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #161512;
+      --surface: #1e1c18;
+      --surface-2: #262319;
+      --ink: #f1ede2;
+      --ink-soft: #c8c0aa;
+      --ink-faint: #8c8570;
+      --line: #37331f;
+      --brass: #d9a24b;
+      --brass-ink: #f0c67c;
+      --brass-soft: #332711;
+      --navy: #cdd7e8;
+      --navy-soft: #23293a;
+      --good: #7fbd9b;
+      --good-soft: #1c2c22;
+      --warn: #d99a5c;
+      --warn-soft: #33240f;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #161512;
+    --surface: #1e1c18;
+    --surface-2: #262319;
+    --ink: #f1ede2;
+    --ink-soft: #c8c0aa;
+    --ink-faint: #8c8570;
+    --line: #37331f;
+    --brass: #d9a24b;
+    --brass-ink: #f0c67c;
+    --brass-soft: #332711;
+    --navy: #cdd7e8;
+    --navy-soft: #23293a;
+    --good: #7fbd9b;
+    --good-soft: #1c2c22;
+    --warn: #d99a5c;
+    --warn-soft: #33240f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px -12px rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 880px; margin: 0 auto; padding: 56px 24px 96px; }
+
+  header.masthead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 28px;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 5vw, 2.75rem);
+    letter-spacing: 0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+  .wordmark span { color: var(--brass-ink); }
+  .masthead-meta {
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.7;
+  }
+
+  .lede {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 40px;
+  }
+
+  .stack { display: flex; flex-direction: column; gap: 4px; margin-bottom: 56px; }
+  .eyebrow {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--brass-ink);
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+  .stack h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.5rem;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  .stack .dek { color: var(--ink-soft); margin: 0 0 20px; max-width: 60ch; font-size: 0.96rem; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 20px;
+    background: var(--navy-soft);
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .panel-head .label { font-weight: 600; font-size: 0.92rem; }
+  .panel-head .sub { color: var(--ink-faint); font-size: 0.8rem; }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.good { background: var(--good-soft); color: var(--good); }
+  .pill.brass { background: var(--brass-soft); color: var(--brass-ink); }
+
+  .panel-body { padding: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th {
+    text-align: left;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    font-weight: 600;
+    padding: 0 10px 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--line);
+    font-variant-numeric: tabular-nums;
+  }
+  tr:last-child td { border-bottom: none; }
+  .num { text-align: right; }
+  .tablewrap { overflow-x: auto; }
+
+  .kv-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 0.92rem; }
+  .kv-row:last-child { border-bottom: none; }
+  .kv-row .k { color: var(--ink-faint); }
+  .kv-row .v { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .kv-row.total .v { color: var(--brass-ink); font-size: 1.05rem; }
+
+  .meter { height: 8px; background: var(--surface-2); border-radius: 100px; overflow: hidden; margin-top: 6px; }
+  .meter > i { display: block; height: 100%; background: var(--brass); border-radius: 100px; }
+
+  .milestone-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 0.9rem; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .dot.done { background: var(--good); }
+  .dot.progress { background: var(--brass); }
+  .dot.pending { background: var(--line); }
+  .milestone-row .status { margin-left: auto; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-faint); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; margin-top: 16px; }
+  .stat {
+    background: var(--surface-2);
+    border-radius: 4px;
+    padding: 12px 14px;
+  }
+  .stat .n { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-faint); }
+
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 0.85rem; margin-bottom: 20px; color: var(--ink-soft); }
+  .flow .step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    border-radius: 100px;
+    font-weight: 600;
+  }
+  .flow .arrow { color: var(--ink-faint); }
+
+  .callout {
+    background: var(--brass-soft);
+    border: 1px solid var(--brass);
+    border-radius: 4px;
+    padding: 16px 20px;
+    font-size: 0.9rem;
+    color: var(--brass-ink);
+    margin-top: 12px;
+  }
+
+  .credentials {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+  }
+  .cred {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    background: var(--surface);
+  }
+  .cred .role { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--brass-ink); font-weight: 700; }
+  .cred .email { font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .cred .pw { color: var(--ink-faint); font-size: 0.8rem; }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media (max-width: 560px) {
+    .masthead-meta { text-align: left; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <h1 class="wordmark">GAMA <span>SUPREME</span></h1>
+    <div class="masthead-meta">
+      Operations Platform &mdash; Demo Walkthrough<br>
+      Door Manufacturing &middot; Interior Fit-out &middot; Material Trading
+    </div>
+  </header>
+
+  <p class="lede">
+    One system, three businesses. Below is a walkthrough of how quotations, invoices,
+    delivery, payroll and reporting run inside GAMA SUPREME &mdash; using live data from
+    the working build, in AED, with UAE tax fields in place.
+  </p>
+
+  <section class="stack">
+    <p class="eyebrow">01 &middot; Switching businesses</p>
+    <h2>One login, three operating contexts</h2>
+    <p class="dek">A single sign-in gives access to all three business lines. Switching context changes the document numbering, the nav, and which modules are relevant &mdash; but customers, employees and payroll stay shared across all three.</p>
+    <div class="panel">
+      <div class="panel-body">
+        <div class="flow" style="margin-bottom:0;">
+          <span class="pill brass">Door Manufacturing</span>
+          <span class="arrow">/</span>
+          <span class="pill brass">Interior Fit-out</span>
+          <span class="arrow">/</span>
+          <span class="pill brass">Material Trading</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <p class="eyebrow">02 &middot; Door Manufacturing</p>
+    <h2>Invoice INV&#8209;DM&#8209;2026&#8209;002</h2>
+    <p class="dek">Custom door specs travel with the line item from quotation through to invoice. Business and customer VAT numbers appear automatically for compliant paperwork.</p>
+    <div class="panel">
+      <div class="panel-head">
+        <span class="label">Acme Retail Pte Ltd</span>
+        <span class="pill warn">Unpaid</span>
+      </div>
+      <div class="panel-body">
+        <div class="kv-row"><span class="k">Business TRN</span><span class="v">100123456700003</span></div>
+        <div class="kv-row"><span class="k">Customer TRN</span><span class="v">100987654300003</span></div>
+        <div class="tablewrap" style="margin-top:16px;">
+          <table>
+            <thead><tr><th>Description</th><th>Size</th><th>Material</th><th>Finish</th><th class="num">Qty</th><th class="num">Subtotal</th></tr></thead>
+            <tbody>
+              <tr><td>Custom entrance door</td><td>90 &times; 210 cm</td><td>Solid Oak</td><td>Walnut</td><td class="num">2</td><td class="num">AED 2,400.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:16px;">
+          <div class="kv-row"><span class="k">Subtotal</span><span class="v">AED 2,400.00</span></div>
+          <div class="kv-row"><span class="k">VAT (5%)</span><span class="v">AED 120.00</span></div>
+          <div class="kv-row total"><span class="k">Total</span><span class="v">AED 2,520.00</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <p class="eyebrow">03 &middot; Interior Fit-out</p>
+    <h2>Project: Acme HQ Office Fitout</h2>
+    <p class="dek">Fit-out jobs are organised by site rather than by single document &mdash; quotations, invoices, delivery orders and the completion certificate all roll up to one project with visible progress.</p>
+    <div class="panel">
+      <div class="panel-head">
+        <span class="label">Business Bay, Dubai, UAE</span>
+        <span class="sub">Started 15 Aug 2026</span>
+      </div>
+      <div class="panel-body">
+        <div class="kv-row"><span class="k">Overall progress</span><span class="v">25%</span></div>
+        <div class="meter"><i style="width:25%"></i></div>
+        <div style="margin-top:18px;">
+          <div class="milestone-row"><span class="dot done"></span> Design approval <span class="status">Done</span></div>
+          <div class="milestone-row"><span class="dot progress"></span> Civil &amp; MEP works <span class="status">In progress</span></div>
+          <div class="milestone-row"><span class="dot pending"></span> Fit-out &amp; finishing <span class="status">Pending</span></div>
+          <div class="milestone-row"><span class="dot pending"></span> Handover <span class="status">Pending</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <p class="eyebrow">04 &middot; Material Trading</p>
+    <h2>Product catalogue &amp; stock</h2>
+    <p class="dek">Stock decrements automatically when a sales invoice is issued, and increases when a purchase order is received. Items below their reorder threshold are flagged.</p>
+    <div class="panel">
+      <div class="panel-body">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Product</th><th>SKU</th><th class="num">Unit Cost</th><th class="num">Stock</th><th class="num">Reorder At</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Cement Bag 50kg</td><td>MT-CEM-001</td><td class="num">AED 18.00</td><td class="num">160</td><td class="num">50</td><td><span class="pill good">OK</span></td></tr>
+              <tr><td>PVC Pipe 4in x 3m</td><td>MT-PIPE-002</td><td class="num">AED 25.00</td><td class="num">70</td><td class="num">40</td><td><span class="pill good">OK</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <p class="eyebrow">05 &middot; Payroll</p>
+    <h2>Monthly run &mdash; August 2026</h2>
+    <p class="dek">Shared across all three businesses. Base salary, deductions and bonuses are set per employee, per month, and generate payslips on confirmation.</p>
+    <div class="panel">
+      <div class="panel-body">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>Employee</th><th class="num">Base salary</th></tr></thead>
+            <tbody>
+              <tr><td>John Tan</td><td class="num">AED 3,500.00</td></tr>
+              <tr><td>Mary Lim</td><td class="num">AED 4,200.00</td></tr>
+              <tr><td>Rahim Ismail</td><td class="num">AED 3,000.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="stat-grid">
+          <div class="stat"><div class="n">3</div><div class="l">Employees paid</div></div>
+          <div class="stat"><div class="n">AED 10,700</div><div class="l">Total net pay</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stack">
+    <p class="eyebrow">06 &middot; Compliance</p>
+    <h2>UAE e-invoicing &mdash; groundwork in place</h2>
+    <p class="dek">Business and customer VAT registration numbers, and the 5% VAT breakdown, are captured on every invoice today. Formal FTA e-invoicing submission requires routing through an accredited service provider &mdash; that integration is the next step once a provider is selected.</p>
+    <div class="callout">
+      Ready now: TRNs on file, VAT calculated per invoice, structured line items.<br>
+      Pending: connection to an FTA-accredited service provider for direct submission.
+    </div>
+  </section>
+
+  <section class="stack">
+    <p class="eyebrow">Access</p>
+    <h2>Try it yourself</h2>
+    <p class="dek">Demo accounts, one per role. All passwords: <code>password123</code></p>
+    <div class="credentials">
+      <div class="cred"><div class="role">Admin</div><div class="email">admin@gamasupreme.com</div></div>
+      <div class="cred"><div class="role">Sales</div><div class="email">sam@gamasupreme.com</div></div>
+      <div class="cred"><div class="role">Sales</div><div class="email">priya@gamasupreme.com</div></div>
+      <div class="cred"><div class="role">Accountant</div><div class="email">amy@gamasupreme.com</div></div>
+      <div class="cred"><div class="role">Accountant</div><div class="email">ben@gamasupreme.com</div></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>GAMA SUPREME &mdash; internal demo build</span>
+    <span>Prepared for client review</span>
+  </footer>
+
+</div>

@@ -1,0 +1,297 @@
+// Prisma schema for GAMA SUPREME ERP.
+// Uses SQLite for local dev but sticks to standard types/relations so it
+// can be pointed at Postgres later by just changing the datasource provider.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String // bcrypt hash
+  role      String // "admin" | "sales_staff" | "accountant" - plain string for SQLite/Postgres portability
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// The three businesses run from this shared system. Every document belongs
+// to exactly one Business and each business keeps its own document number
+// series (numbers are composed as "<PREFIX>-<code>-<year>-<seq>").
+model Business {
+  id        Int      @id @default(autoincrement())
+  name      String
+  code      String   @unique // "DM" | "FO" | "MT"
+  trn       String? // UAE Tax Registration Number (15 digits), for FTA e-invoicing
+  createdAt DateTime @default(now())
+
+  quotations             Quotation[]
+  invoices               Invoice[]
+  deliveryOrders         DeliveryOrder[]
+  completionCertificates CompletionCertificate[]
+  projects               Project[]
+  products               Product[]
+  purchaseOrders         PurchaseOrder[]
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String?
+  phone     String?
+  address   String?
+  trn       String? // UAE Tax Registration Number (15 digits), optional - not all customers are VAT-registered
+  createdAt DateTime @default(now())
+
+  quotations Quotation[]
+  projects   Project[]
+}
+
+model Employee {
+  id            Int      @id @default(autoincrement())
+  name          String
+  position      String
+  monthlySalary Float
+  bankName      String?
+  bankAccount   String?
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  payrollItems PayrollItem[]
+}
+
+// Interior Fit-out projects. Quotations/Invoices/DOs/Certificates for the
+// Interior Fit-out business link to a Project.
+model Project {
+  id         Int       @id @default(autoincrement())
+  businessId Int
+  business   Business  @relation(fields: [businessId], references: [id])
+  name       String
+  address    String?
+  customerId Int?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  startDate  DateTime?
+  createdAt  DateTime  @default(now())
+
+  milestones             Milestone[]
+  quotations             Quotation[]
+  invoices               Invoice[]
+  deliveryOrders         DeliveryOrder[]
+  completionCertificates CompletionCertificate[]
+}
+
+model Milestone {
+  id        Int     @id @default(autoincrement())
+  projectId Int
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  status    String  @default("pending") // "pending" | "in-progress" | "done"
+  order     Int     @default(0)
+}
+
+// Material Trading product catalog.
+model Product {
+  id               Int      @id @default(autoincrement())
+  businessId       Int
+  business         Business @relation(fields: [businessId], references: [id])
+  name             String
+  sku              String   @unique
+  unit             String
+  unitCost         Float
+  stockQty         Float    @default(0)
+  reorderThreshold Float    @default(0)
+  createdAt        DateTime @default(now())
+
+  quotationItems     QuotationItem[]
+  invoiceItems       InvoiceItem[]
+  purchaseOrderItems PurchaseOrderItem[]
+}
+
+model Supplier {
+  id        Int      @id @default(autoincrement())
+  name      String
+  contact   String?
+  createdAt DateTime @default(now())
+
+  purchaseOrders PurchaseOrder[]
+}
+
+// Purchase orders increase stock when marked received.
+model PurchaseOrder {
+  id         Int       @id @default(autoincrement())
+  number     String    @unique // PO-MT-2026-001
+  businessId Int
+  business   Business  @relation(fields: [businessId], references: [id])
+  supplierId Int
+  supplier   Supplier  @relation(fields: [supplierId], references: [id])
+  status     String    @default("pending") // "pending" | "received"
+  receivedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  items PurchaseOrderItem[]
+}
+
+model PurchaseOrderItem {
+  id              Int           @id @default(autoincrement())
+  purchaseOrderId Int
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productId       Int
+  product         Product       @relation(fields: [productId], references: [id])
+  qty             Float
+  unitCost        Float
+}
+
+model Quotation {
+  id         Int      @id @default(autoincrement())
+  number     String   @unique // QT-DM-2026-001
+  businessId Int
+  business   Business @relation(fields: [businessId], references: [id])
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id])
+  projectId  Int?
+  project    Project? @relation(fields: [projectId], references: [id])
+  jobType    String   @default("standard") // "standard" | "fitout" - fitout jobs may get a completion certificate
+  status     String   @default("draft") // "draft" | "sent" | "accepted" | "rejected"
+  notes      String?
+  // Door Manufacturing job stage tracker: Measurement -> Production -> QC -> Delivery.
+  jobStage   String?  @default("Measurement")
+  createdAt  DateTime @default(now())
+
+  items    QuotationItem[]
+  invoices Invoice[]
+}
+
+model QuotationItem {
+  id          Int       @id @default(autoincrement())
+  quotationId Int
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  description String
+  qty         Float
+  unitPrice   Float
+  // Door Manufacturing specs (optional - only used when business = Door Manufacturing).
+  doorWidth   Float?
+  doorHeight  Float?
+  material    String?
+  finish      String?
+  // Material Trading catalog link (optional - only used when business = Material Trading).
+  productId   Int?
+  product     Product?  @relation(fields: [productId], references: [id])
+}
+
+model Invoice {
+  id          Int       @id @default(autoincrement())
+  number      String    @unique // INV-DM-2026-001
+  businessId  Int
+  business    Business  @relation(fields: [businessId], references: [id])
+  quotationId Int
+  quotation   Quotation @relation(fields: [quotationId], references: [id])
+  customerId  Int
+  projectId   Int?
+  project     Project?  @relation(fields: [projectId], references: [id])
+  status      String    @default("unpaid") // "unpaid" | "partial" | "paid"
+  dueDate     DateTime
+  amountPaid  Float     @default(0)
+  vatRate     Float     @default(5) // UAE standard VAT rate (%), for FTA e-invoicing prep
+  createdAt   DateTime  @default(now())
+
+  items          InvoiceItem[]
+  deliveryOrders DeliveryOrder[]
+}
+
+model InvoiceItem {
+  id          Int      @id @default(autoincrement())
+  invoiceId   Int
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  qty         Float
+  unitPrice   Float
+  doorWidth   Float?
+  doorHeight  Float?
+  material    String?
+  finish      String?
+  productId   Int?
+  product     Product? @relation(fields: [productId], references: [id])
+}
+
+model DeliveryOrder {
+  id           Int      @id @default(autoincrement())
+  number       String   @unique // DO-DM-2026-001
+  businessId   Int
+  business     Business @relation(fields: [businessId], references: [id])
+  invoiceId    Int
+  invoice      Invoice  @relation(fields: [invoiceId], references: [id])
+  projectId    Int?
+  project      Project? @relation(fields: [projectId], references: [id])
+  deliveryDate DateTime
+  signedBy     String?
+  createdAt    DateTime @default(now())
+
+  items                 DeliveryOrderItem[]
+  completionCertificate CompletionCertificate?
+}
+
+model DeliveryOrderItem {
+  id              Int           @id @default(autoincrement())
+  deliveryOrderId Int
+  deliveryOrder   DeliveryOrder @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+  description     String
+  qty             Float
+}
+
+model CompletionCertificate {
+  id               Int           @id @default(autoincrement())
+  number           String        @unique // CC-FO-2026-001
+  businessId       Int
+  business         Business      @relation(fields: [businessId], references: [id])
+  deliveryOrderId  Int           @unique
+  deliveryOrder    DeliveryOrder @relation(fields: [deliveryOrderId], references: [id])
+  projectId        Int?
+  project          Project?      @relation(fields: [projectId], references: [id])
+  completionDate   DateTime
+  scopeDescription String
+  clientName       String?
+  clientSignature  String? // placeholder text/base64 - no real e-sign integration
+  signOffDate      DateTime?
+  createdAt        DateTime      @default(now())
+}
+
+model PayrollRun {
+  id        Int      @id @default(autoincrement())
+  month     String   // "YYYY-MM"
+  createdAt DateTime @default(now())
+
+  items PayrollItem[]
+
+  @@unique([month])
+}
+
+model PayrollItem {
+  id           Int        @id @default(autoincrement())
+  payrollRunId Int
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+  employeeId   Int
+  employee     Employee   @relation(fields: [employeeId], references: [id])
+  baseSalary   Float
+  deductions   Float      @default(0)
+  bonuses      Float      @default(0)
+  netPay       Float
+}
+
+// Tracks the next sequence number per document type per year, so
+// document numbers stay sequential and gapless even with concurrent creates.
+// The "prefix" already embeds the business code (e.g. "INV-DM"), which gives
+// each business its own independent number series for free.
+model DocumentSequence {
+  id     Int    @id @default(autoincrement())
+  prefix String // "QT-DM", "INV-FO", "DO-MT", "CC-FO", "PO-MT"
+  year   Int
+  seq    Int    @default(0)
+
+  @@unique([prefix, year])
+}
