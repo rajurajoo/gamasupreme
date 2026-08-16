@@ -355,3 +355,34 @@ label {
   .business-switcher { flex: 1 0 auto; }
   .topbar .user-info { margin-left: 0; width: 100%; justify-content: space-between; }
 }
+
+/* ---------- Skeleton loading placeholders ---------- */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-subtle, #e5e7eb);
+  border-radius: var(--radius-sm, 6px);
+  color: transparent !important;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.skeleton-tile .value { visibility: hidden; }
+.skeleton-chart { width: 100%; height: 220px; }
+.skeleton-line { display: block; height: 14px; border-radius: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+  .skeleton { opacity: 0.6; }
+}

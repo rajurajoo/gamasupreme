@@ -45,7 +45,7 @@ export default function Dashboard() {
     <div>
       <h1>Welcome, {user.name}</h1>
       {activeBusiness && <p style={{ color: '#6b7280', marginTop: -10 }}>Active business: <strong>{activeBusiness.name}</strong></p>}
-      {counts && (
+      {counts ? (
         <div className="report-grid">
           <Link to="/quotations" className="card report-tile">
             <div className="label">Quotations</div>
@@ -64,16 +64,25 @@ export default function Dashboard() {
             <div className="value">{money(counts.outstanding)}</div>
           </div>
         </div>
+      ) : (
+        <div className="report-grid">
+          {[0, 1, 2, 3].map((i) => (
+            <div className="card report-tile skeleton-tile" key={i}>
+              <div className="label">&nbsp;</div>
+              <div className="value skeleton skeleton-line" style={{ width: '60%' }}>0</div>
+            </div>
+          ))}
+        </div>
       )}
       <div className="card">
         <h3>Revenue trend (last 6 months, all businesses)</h3>
-        {trend ? <LineAreaChart data={trend.map((t) => ({ label: t.label, value: t.total }))} /> : <p style={{ color: '#6b7280' }}>Loading...</p>}
+        {trend ? <LineAreaChart data={trend.map((t) => ({ label: t.label, value: t.total }))} /> : <div className="skeleton skeleton-chart" />}
       </div>
 
       <div className="report-grid" style={{ gridTemplateColumns: '1.2fr 1fr', alignItems: 'stretch' }}>
         <div className="card">
           <h3>Sales by business (all-time)</h3>
-          {byBusiness ? <BarChart data={byBusiness.map((b) => ({ label: b.businessCode, value: b.total }))} /> : <p style={{ color: '#6b7280' }}>Loading...</p>}
+          {byBusiness ? <BarChart data={byBusiness.map((b) => ({ label: b.businessCode, value: b.total }))} /> : <div className="skeleton skeleton-chart" />}
         </div>
         <div className="card">
           <h3>Invoice status {activeBusiness ? `(${activeBusiness.name})` : ''}</h3>
@@ -81,7 +90,7 @@ export default function Dashboard() {
             <DonutChart
               data={statusBreakdown.map((s) => ({ label: s.status, value: s.count, color: STATUS_COLORS[s.status] || '#9ca3af' }))}
             />
-          ) : <p style={{ color: '#6b7280' }}>Loading...</p>}
+          ) : <div className="skeleton skeleton-chart" />}
         </div>
       </div>
 
