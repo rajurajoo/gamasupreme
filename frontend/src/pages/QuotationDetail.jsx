@@ -44,7 +44,7 @@ export default function QuotationDetail() {
 
   return (
     <div className="print-view">
-      <p style={{ color: '#6b7280', margin: '0 0 6px' }}>GAMA SUPREME - {q.business?.name}</p>
+      <p style={{ color: 'var(--text-secondary)', margin: '0 0 6px' }}>GAMA SUPREME - {q.business?.name}</p>
       <h1>Quotation {q.number} <span className={`badge ${q.status}`}>{q.status}</span></h1>
       <div className="card">
         <p><strong>Customer:</strong> {q.customer.name}<br />
@@ -100,7 +100,7 @@ export default function QuotationDetail() {
               </button>
             ))}
           </div>
-          <p style={{ color: '#6b7280', fontSize: 13 }}>Current stage: <strong>{q.jobStage || 'Measurement'}</strong></p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Current stage: <strong>{q.jobStage || 'Measurement'}</strong></p>
         </div>
       )}
 

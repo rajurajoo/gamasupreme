@@ -31,15 +31,16 @@ export default function BarChart({ data, height = 220 }) {
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} role="img" aria-label="Sales by business chart">
       <defs>
         <linearGradient id="bc-bar" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--brand-start)" />
-          <stop offset="100%" stopColor="var(--brand-end)" />
+          <stop offset="0%" stopColor="#ff7a45" />
+          <stop offset="50%" stopColor="#ff3d9a" />
+          <stop offset="100%" stopColor="#7b2ff7" />
         </linearGradient>
       </defs>
 
       {gridYs.map((gy, i) => (
         <g key={i}>
-          <line x1={padL} y1={gy} x2={W - padR} y2={gy} stroke="#e5e7eb" strokeWidth="1" />
-          <text x={padL - 8} y={gy + 4} fontSize="10" textAnchor="end" fill="#6b7280">
+          <line x1={padL} y1={gy} x2={W - padR} y2={gy} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+          <text x={padL - 8} y={gy + 4} fontSize="10" textAnchor="end" fill="#857b96">
             {gridVals[i] >= 1000 ? `${Math.round(gridVals[i] / 1000)}k` : gridVals[i]}
           </text>
         </g>
@@ -66,11 +67,11 @@ export default function BarChart({ data, height = 220 }) {
               <title>{`${d.label}: ${money(d.value)}`}</title>
             </rect>
             {hover === i && (
-              <text x={bx + barW / 2} y={by - 6} fontSize="11" fontWeight="600" textAnchor="middle" fill="#111827">
+              <text x={bx + barW / 2} y={by - 6} fontSize="11" fontWeight="600" textAnchor="middle" fill="#f5f2f8">
                 {money(d.value)}
               </text>
             )}
-            <text x={bx + barW / 2} y={H - 20} fontSize="10" textAnchor="middle" fill="#374151">
+            <text x={bx + barW / 2} y={H - 20} fontSize="10" textAnchor="middle" fill="#b6acc4">
               {d.label}
             </text>
           </g>

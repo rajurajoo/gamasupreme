@@ -32,19 +32,20 @@ export default function LineAreaChart({ data, height = 220 }) {
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} role="img" aria-label="Revenue trend chart">
       <defs>
         <linearGradient id="lac-area" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="var(--brand-end)" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="var(--brand-end)" stopOpacity="0.02" />
+          <stop offset="0%" stopColor="#ff3d9a" stopOpacity="0.32" />
+          <stop offset="100%" stopColor="#ff3d9a" stopOpacity="0" />
         </linearGradient>
         <linearGradient id="lac-line" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="var(--brand-start)" />
-          <stop offset="100%" stopColor="var(--brand-end)" />
+          <stop offset="0%" stopColor="#ff7a45" />
+          <stop offset="50%" stopColor="#ff3d9a" />
+          <stop offset="100%" stopColor="#7b2ff7" />
         </linearGradient>
       </defs>
 
       {gridYs.map((gy, i) => (
         <g key={i}>
-          <line x1={padL} y1={gy} x2={W - padR} y2={gy} stroke="#e5e7eb" strokeWidth="1" />
-          <text x={padL - 8} y={gy + 4} fontSize="10" textAnchor="end" fill="#6b7280">
+          <line x1={padL} y1={gy} x2={W - padR} y2={gy} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+          <text x={padL - 8} y={gy + 4} fontSize="10" textAnchor="end" fill="#857b96">
             {gridVals[i] >= 1000 ? `${Math.round(gridVals[i] / 1000)}k` : gridVals[i]}
           </text>
         </g>
@@ -59,8 +60,8 @@ export default function LineAreaChart({ data, height = 220 }) {
             cx={x(i)}
             cy={y(d.value)}
             r={hover === i ? 6 : 4}
-            fill="#fff"
-            stroke="var(--brand-start)"
+            fill="#17131f"
+            stroke="#ff3d9a"
             strokeWidth="2"
             onMouseEnter={() => setHover(i)}
             onMouseLeave={() => setHover(null)}
@@ -68,7 +69,7 @@ export default function LineAreaChart({ data, height = 220 }) {
           >
             <title>{`${d.label}: ${money(d.value)}`}</title>
           </circle>
-          <text x={x(i)} y={H - 8} fontSize="10" textAnchor="middle" fill="#6b7280">
+          <text x={x(i)} y={H - 8} fontSize="10" textAnchor="middle" fill="#857b96">
             {d.label}
           </text>
           {hover === i && (
@@ -78,8 +79,8 @@ export default function LineAreaChart({ data, height = 220 }) {
                 y={Math.max(y(d.value) - 34, 2)}
                 width="90"
                 height="24"
-                rx="4"
-                fill="#111827"
+                rx="6"
+                fill="url(#lac-line)"
               />
               <text
                 x={Math.min(Math.max(x(i) - 45, padL), W - padR - 90) + 45}

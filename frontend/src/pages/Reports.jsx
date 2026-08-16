@@ -37,7 +37,7 @@ export default function Reports() {
             <div className="report-tile"><div className="label">Payroll Cost</div><div className="value">{money(report.totalPayrollCost)}</div></div>
             <div className="report-tile"><div className="label">Net Summary</div><div className="value">{money(report.netSummary)}</div></div>
           </div>
-          <p style={{ color: '#6b7280', fontSize: 13 }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
             Net summary = total collected - total payroll cost for the month (payroll is shared across all businesses). Total sales reflects invoices issued in the period regardless of payment status.
           </p>
 

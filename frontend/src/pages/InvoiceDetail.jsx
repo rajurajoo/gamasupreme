@@ -44,7 +44,7 @@ export default function InvoiceDetail() {
 
   return (
     <div className="print-view">
-      <p style={{ color: '#6b7280', margin: '0 0 6px' }}>GAMA SUPREME - {inv.business?.name}</p>
+      <p style={{ color: 'var(--text-secondary)', margin: '0 0 6px' }}>GAMA SUPREME - {inv.business?.name}</p>
       <h1>Invoice {inv.number} <span className={`badge ${inv.status}`}>{inv.status}</span></h1>
       <div className="card">
         <p><strong>Business TRN:</strong> {inv.business?.trn || 'Not set'}</p>

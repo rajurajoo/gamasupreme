@@ -36,8 +36,8 @@ export default function ProjectDetail() {
         <p><strong>Address:</strong> {project.address || '-'}</p>
         <p><strong>Start Date:</strong> {project.startDate ? new Date(project.startDate).toLocaleDateString() : '-'}</p>
         <p><strong>Overall Progress:</strong> {project.progress}%</p>
-        <div style={{ background: '#e5e7eb', borderRadius: 8, height: 10, overflow: 'hidden' }}>
-          <div style={{ background: 'linear-gradient(90deg, #1A2980, #26D0CE)', height: '100%', width: `${project.progress}%` }} />
+        <div style={{ background: 'var(--bg-subtle)', borderRadius: 8, height: 10, overflow: 'hidden' }}>
+          <div style={{ background: 'var(--brand-gradient)', height: '100%', width: `${project.progress}%` }} />
         </div>
       </div>
 

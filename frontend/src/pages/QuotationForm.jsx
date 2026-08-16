@@ -61,7 +61,7 @@ export default function QuotationForm() {
 
   return (
     <div>
-      <h1>New Quotation {activeBusiness && <span style={{ fontSize: 14, color: '#6b7280' }}>({activeBusiness.name})</span>}</h1>
+      <h1>New Quotation {activeBusiness && <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>({activeBusiness.name})</span>}</h1>
       <div className="card">
         <form onSubmit={handleSubmit}>
           <div className="row">

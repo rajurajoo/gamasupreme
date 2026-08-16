@@ -8,7 +8,24 @@ import LineAreaChart from '../components/charts/LineAreaChart';
 import BarChart from '../components/charts/BarChart';
 import DonutChart from '../components/charts/DonutChart';
 
-const STATUS_COLORS = { unpaid: '#f59e0b', partial: '#3b82f6', paid: '#10b981' };
+const STATUS_COLORS = { unpaid: '#fbbf24', partial: '#7c9bff', paid: '#34d399' };
+
+function tileIcon(path) {
+  return (
+    <span className="icon-badge">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        {path}
+      </svg>
+    </span>
+  );
+}
+
+const TILE_ICONS = {
+  quotations: tileIcon(<><path d="M7 3h8l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M15 3v4h4" /><path d="M9 12h6M9 16h6" /></>),
+  invoices: tileIcon(<><path d="M6 2h9l4 4v16H6V2Z" /><path d="M15 2v4h4" /><path d="M9 11h6M9 15h6M9 19h3" /></>),
+  delivery: tileIcon(<><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7z" /><circle cx="7" cy="18" r="1.6" /><circle cx="18" cy="18" r="1.6" /></>),
+  cash: tileIcon(<><rect x="2.5" y="6" width="19" height="12" rx="2" /><circle cx="12" cy="12" r="3" /></>),
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -44,24 +61,36 @@ export default function Dashboard() {
   return (
     <div>
       <h1>Welcome, {user.name}</h1>
-      {activeBusiness && <p style={{ color: '#6b7280', marginTop: -10 }}>Active business: <strong>{activeBusiness.name}</strong></p>}
+      {activeBusiness && <p style={{ color: 'var(--text-secondary)', marginTop: -10 }}>Active business: <strong>{activeBusiness.name}</strong></p>}
       {counts ? (
         <div className="report-grid">
           <Link to="/quotations" className="card report-tile">
-            <div className="label">Quotations</div>
-            <div className="value">{counts.quotations}</div>
+            {TILE_ICONS.quotations}
+            <div className="tile-body">
+              <div className="value">{counts.quotations}</div>
+              <div className="label">Quotations</div>
+            </div>
           </Link>
           <Link to="/invoices" className="card report-tile">
-            <div className="label">Invoices</div>
-            <div className="value">{counts.invoices}</div>
+            {TILE_ICONS.invoices}
+            <div className="tile-body">
+              <div className="value">{counts.invoices}</div>
+              <div className="label">Invoices</div>
+            </div>
           </Link>
           <Link to="/delivery-orders" className="card report-tile">
-            <div className="label">Delivery Orders</div>
-            <div className="value">{counts.deliveryOrders}</div>
+            {TILE_ICONS.delivery}
+            <div className="tile-body">
+              <div className="value">{counts.deliveryOrders}</div>
+              <div className="label">Delivery Orders</div>
+            </div>
           </Link>
           <div className="card report-tile">
-            <div className="label">Outstanding (this business)</div>
-            <div className="value">{money(counts.outstanding)}</div>
+            {TILE_ICONS.cash}
+            <div className="tile-body">
+              <div className="value">{money(counts.outstanding)}</div>
+              <div className="label">Outstanding (this business)</div>
+            </div>
           </div>
         </div>
       ) : (

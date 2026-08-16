@@ -33,7 +33,7 @@ export default function DeliveryOrderDetail() {
 
   return (
     <div className="print-view">
-      <p style={{ color: '#6b7280', margin: '0 0 6px' }}>GAMA SUPREME - {doc.business?.name}</p>
+      <p style={{ color: 'var(--text-secondary)', margin: '0 0 6px' }}>GAMA SUPREME - {doc.business?.name}</p>
       <h1>Delivery Order {doc.number}</h1>
       <div className="card">
         <p><strong>Customer:</strong> {customer.name}</p>
