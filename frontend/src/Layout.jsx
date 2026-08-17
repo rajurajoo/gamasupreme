@@ -26,7 +26,7 @@ const ICONS = {
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
-  const { businesses, businessId, activeBusiness, setBusinessId } = useBusiness();
+  const { businesses, businessId, activeBusiness, setBusinessId, loadError, retryLoadBusinesses } = useBusiness();
   const navigate = useNavigate();
 
   function handleLogout() {
@@ -54,6 +54,11 @@ export default function Layout({ children }) {
                 {b.name}
               </button>
             ))}
+            {loadError && (
+              <button type="button" className="business-tab business-tab-retry" onClick={retryLoadBusinesses}>
+                Couldn't load businesses — Retry
+              </button>
+            )}
           </div>
         </div>
         <div className="user-info">

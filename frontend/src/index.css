@@ -199,6 +199,14 @@ h3 { margin-top: 0; font-size: 16px; }
   background: #fff;
   color: var(--accent-purple);
 }
+.business-tab-retry {
+  background: rgba(248, 113, 113, 0.18);
+  color: #fff;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+}
+.business-tab-retry:hover {
+  background: rgba(248, 113, 113, 0.3);
+}
 
 .topbar .user-info {
   display: flex;

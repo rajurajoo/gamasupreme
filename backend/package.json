@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "dev": "node src/index.js",
+    "dev": "nodemon --watch src --exec node src/index.js",
     "start": "npx prisma migrate deploy && node src/index.js",
     "seed": "node prisma/seed.js",
     "prisma:generate": "prisma generate",
@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "prisma": "^5.20.0"
   }
 }
