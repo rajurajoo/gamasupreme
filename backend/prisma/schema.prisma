@@ -203,6 +203,7 @@ model Invoice {
   amountPaid  Float     @default(0)
   vatRate     Float     @default(5) // UAE standard VAT rate (%), for FTA e-invoicing prep
   discountPercent Float @default(0) // carried over from the source quotation, applied to subtotal before VAT
+  percentOfQuotation Float? // when set, this invoice bills this % of the quotation's after-discount subtotal (milestone/progress billing). Null = legacy full invoice.
   createdAt   DateTime  @default(now())
 
   items          InvoiceItem[]

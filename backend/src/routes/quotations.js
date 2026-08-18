@@ -19,6 +19,33 @@ function withTotals(q) {
 }
 
 const include = { items: { include: { product: true } }, customer: true, project: true, business: true };
+const includeWithInvoices = {
+  ...include,
+  invoices: {
+    select: { id: true, number: true, percentOfQuotation: true, status: true, createdAt: true, items: true, amountPaid: true, vatRate: true, discountPercent: true },
+    orderBy: { createdAt: 'asc' },
+  },
+};
+
+function withInvoiceProgress(q) {
+  const alreadyInvoicedPercent = (q.invoices || []).reduce(
+    (sum, inv) => sum + (inv.percentOfQuotation != null ? inv.percentOfQuotation : 100),
+    0
+  );
+  const invoicedPercent = Math.min(100, alreadyInvoicedPercent);
+  const remainingPercent = Math.max(0, 100 - alreadyInvoicedPercent);
+  const invoices = (q.invoices || []).map((inv) => {
+    const subtotal = inv.items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
+    const discountPercent = inv.discountPercent != null ? inv.discountPercent : 0;
+    const discountAmount = Math.round(subtotal * (discountPercent / 100) * 100) / 100;
+    const afterDiscount = Math.round((subtotal - discountAmount) * 100) / 100;
+    const vatRate = inv.vatRate != null ? inv.vatRate : 5;
+    const vatAmount = Math.round(afterDiscount * (vatRate / 100) * 100) / 100;
+    const totalWithVat = Math.round((afterDiscount + vatAmount) * 100) / 100;
+    return { id: inv.id, number: inv.number, percentOfQuotation: inv.percentOfQuotation, status: inv.status, createdAt: inv.createdAt, totalWithVat };
+  });
+  return { ...q, invoices, invoicedPercent, remainingPercent };
+}
 
 router.get('/', requireBusiness, async (req, res) => {
   const quotations = await prisma.quotation.findMany({
@@ -32,10 +59,10 @@ router.get('/', requireBusiness, async (req, res) => {
 router.get('/:id', async (req, res) => {
   const q = await prisma.quotation.findUnique({
     where: { id: Number(req.params.id) },
-    include,
+    include: includeWithInvoices,
   });
   if (!q) return res.status(404).json({ error: 'Not found' });
-  res.json(withTotals(q));
+  res.json(withInvoiceProgress(withTotals(q)));
 });
 
 router.post('/', requireBusiness, requireRole('admin', 'sales_staff'), async (req, res) => {

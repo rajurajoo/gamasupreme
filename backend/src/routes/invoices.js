@@ -44,12 +44,15 @@ router.get('/:id', async (req, res) => {
   res.json(withTotals(inv));
 });
 
-// Create an invoice FROM an accepted quotation - copies customer & line items.
-// For Material Trading, decrements stock for any line item linked to a product.
+// Create an invoice FROM an accepted quotation - percentage-based milestone billing.
+// Each invoice bills `percent`% of the quotation's after-discount subtotal.
+// For Material Trading, stock is only decremented on the invoice that brings
+// the cumulative billed percent to 100 (the completing invoice) - at which
+// point each original quotation item's full qty is decremented.
 router.post('/from-quotation/:quotationId', requireRole('admin', 'sales_staff'), async (req, res) => {
   const quotation = await prisma.quotation.findUnique({
     where: { id: Number(req.params.quotationId) },
-    include: { items: { include: { product: true } }, business: true },
+    include: { items: { include: { product: true } }, business: true, invoices: true },
   });
   if (!quotation) return res.status(404).json({ error: 'Quotation not found' });
   if (quotation.status !== 'accepted') {
@@ -58,10 +61,38 @@ router.post('/from-quotation/:quotationId', requireRole('admin', 'sales_staff'),
   const { dueDate } = req.body;
   if (!dueDate) return res.status(400).json({ error: 'dueDate required' });
 
-  // Validate stock availability up-front for Material Trading items.
-  for (const i of quotation.items) {
-    if (i.productId && i.product && i.product.stockQty < i.qty) {
-      return res.status(400).json({ error: `Insufficient stock for ${i.product.name} (have ${i.product.stockQty}, need ${i.qty})` });
+  const percent = Number(req.body.percent);
+  if (!req.body.percent || Number.isNaN(percent) || percent < 1 || percent > 100) {
+    return res.status(400).json({ error: 'percent is required and must be between 1 and 100' });
+  }
+
+  const alreadyInvoicedPercent = quotation.invoices.reduce(
+    (sum, inv) => sum + (inv.percentOfQuotation != null ? inv.percentOfQuotation : 100),
+    0
+  );
+  if (alreadyInvoicedPercent >= 100) {
+    return res.status(400).json({ error: 'This quotation is already fully invoiced' });
+  }
+  const remaining = 100 - alreadyInvoicedPercent;
+  if (percent > remaining) {
+    return res.status(400).json({ error: `Only ${remaining}% remaining on this quotation` });
+  }
+  const cumulativePercent = alreadyInvoicedPercent + percent;
+  const isCompleting = cumulativePercent >= 100;
+
+  // Reuse the same after-discount subtotal math used elsewhere for quotations.
+  const subtotal = quotation.items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
+  const discountPercent = quotation.discountPercent != null ? quotation.discountPercent : 0;
+  const discountAmount = Math.round(subtotal * (discountPercent / 100) * 100) / 100;
+  const afterDiscount = Math.round((subtotal - discountAmount) * 100) / 100;
+  const lineAmount = Math.round(afterDiscount * (percent / 100) * 100) / 100;
+
+  // Validate stock availability up-front, only when this is the completing invoice.
+  if (isCompleting) {
+    for (const i of quotation.items) {
+      if (i.productId && i.product && i.product.stockQty < i.qty) {
+        return res.status(400).json({ error: `Insufficient stock for ${i.product.name} (have ${i.product.stockQty}, need ${i.qty})` });
+      }
     }
   }
 
@@ -75,30 +106,28 @@ router.post('/from-quotation/:quotationId', requireRole('admin', 'sales_staff'),
         customerId: quotation.customerId,
         projectId: quotation.projectId,
         dueDate: new Date(dueDate),
-        discountPercent: quotation.discountPercent != null ? quotation.discountPercent : 0,
+        discountPercent: 0,
+        percentOfQuotation: percent,
         items: {
-          create: quotation.items.map((i) => ({
-            description: i.description,
-            qty: i.qty,
-            unitPrice: i.unitPrice,
-            doorWidth: i.doorWidth,
-            doorHeight: i.doorHeight,
-            material: i.material,
-            finish: i.finish,
-            productId: i.productId,
-          })),
+          create: [{
+            description: `Progress billing — ${percent}% of ${quotation.number}`,
+            qty: 1,
+            unitPrice: lineAmount,
+          }],
         },
       },
       include,
     });
 
-    // Decrement stock for any Material Trading line items tied to a product.
-    for (const i of quotation.items) {
-      if (i.productId) {
-        await tx.product.update({
-          where: { id: i.productId },
-          data: { stockQty: { decrement: i.qty } },
-        });
+    // Only decrement stock on the invoice that completes the quotation (cumulative 100%).
+    if (isCompleting) {
+      for (const i of quotation.items) {
+        if (i.productId) {
+          await tx.product.update({
+            where: { id: i.productId },
+            data: { stockQty: { decrement: i.qty } },
+          });
+        }
       }
     }
 

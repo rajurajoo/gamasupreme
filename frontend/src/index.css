@@ -373,6 +373,10 @@ label {
 .items-table input { width: 90px; }
 .items-table td:first-child input { width: 100%; }
 
+/* ---------- Progress meter (percentage bars) ---------- */
+.meter { background: var(--bg-subtle); border-radius: 8px; height: 10px; overflow: hidden; }
+.meter-fill { background: var(--brand-gradient); height: 100%; transition: width 0.2s ease; }
+
 .totals { text-align: right; font-size: 15px; margin-top: 12px; color: var(--text-secondary); }
 .totals strong { font-size: 19px; color: var(--text-primary); }
 
