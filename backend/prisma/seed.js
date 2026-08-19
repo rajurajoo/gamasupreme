@@ -25,6 +25,7 @@ async function main() {
     { code: 'DM', name: 'Door Manufacturing', trn: '100123456700003' },
     { code: 'FO', name: 'Interior Fit-out', trn: '100234567800003' },
     { code: 'MT', name: 'Material Trading', trn: '100345678900003' },
+    { code: 'MP', name: 'Manpower Supply', trn: null },
   ];
   for (const b of businesses) {
     await prisma.business.upsert({ where: { code: b.code }, update: { trn: b.trn }, create: b });
