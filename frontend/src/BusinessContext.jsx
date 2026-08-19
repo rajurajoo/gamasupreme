@@ -16,7 +16,11 @@ export function BusinessProvider({ children }) {
     let cancelled = false;
     setLoadError(false);
 
-    function attempt(retriesLeft) {
+    // Cold local dev servers can take several seconds to come up, so retry
+    // patiently (up to ~30s covered) before showing the manual-retry banner.
+    // Even after that, keep trying slowly in the background so the app
+    // recovers on its own without the user needing to click Retry.
+    function attempt(attemptNumber) {
       api.get('/businesses').then((list) => {
         if (cancelled) return;
         setBusinesses(list);
@@ -24,14 +28,15 @@ export function BusinessProvider({ children }) {
         if (!businessId && list.length) setBusinessId(list[0].id);
       }).catch(() => {
         if (cancelled) return;
-        if (retriesLeft > 0) {
-          setTimeout(() => attempt(retriesLeft - 1), 1500);
+        if (attemptNumber < 10) {
+          setTimeout(() => attempt(attemptNumber + 1), 2000);
         } else {
           setLoadError(true);
+          setTimeout(() => attempt(attemptNumber), 5000);
         }
       });
     }
-    attempt(3);
+    attempt(0);
 
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps

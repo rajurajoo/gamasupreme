@@ -6,7 +6,7 @@ const { nextDocNumber } = require('../docNumber');
 const router = express.Router();
 router.use(requireAuth);
 
-const include = { items: true, invoice: { include: { quotation: { include: { customer: true } } } }, completionCertificate: true, project: true, business: true };
+const include = { items: true, invoice: { include: { quotation: { include: { customer: true } }, customer: true } }, completionCertificate: true, project: true, business: true };
 
 router.get('/', requireBusiness, async (req, res) => {
   const dos = await prisma.deliveryOrder.findMany({

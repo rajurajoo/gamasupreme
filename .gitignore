@@ -9,3 +9,8 @@ backend/dev.db-journal
 .env
 *.log
 .DS_Store
+backend/uploads/*
+!backend/uploads/.gitkeep
+!backend/uploads/employees
+backend/uploads/employees/*
+!backend/uploads/employees/.gitkeep

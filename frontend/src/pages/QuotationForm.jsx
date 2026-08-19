@@ -4,28 +4,31 @@ import { api } from '../api';
 import { useBusiness } from '../BusinessContext';
 import { money } from '../format';
 
-const emptyItem = { description: '', qty: 1, unitPrice: 0, doorWidth: '', doorHeight: '', material: '', finish: '', productId: '' };
+const emptyItem = { description: '', qty: 1, unit: '', unitPrice: 0, doorWidth: '', doorHeight: '', material: '', finish: '', workerCount: '', productId: '' };
 
 export default function QuotationForm() {
   const { activeBusiness } = useBusiness();
   const code = activeBusiness?.code;
-  const [customers, setCustomers] = useState([]);
   const [projects, setProjects] = useState([]);
   const [products, setProducts] = useState([]);
-  const [customerId, setCustomerId] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerEmail, setCustomerEmail] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [projectId, setProjectId] = useState('');
   const [jobType, setJobType] = useState('standard');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState([{ ...emptyItem }]);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [attn, setAttn] = useState('');
+  const [projectLocation, setProjectLocation] = useState('');
+  const [subject, setSubject] = useState('');
+  const [refBy, setRefBy] = useState('');
+  const [validUntil, setValidUntil] = useState('');
+  const [number, setNumber] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    api.get('/customers').then((cs) => {
-      setCustomers(cs);
-      if (cs.length) setCustomerId(cs[0].id);
-    });
     if (code === 'FO') api.get('/projects').then(setProjects);
     if (code === 'MT') api.get('/products').then(setProducts);
   }, [code]);
@@ -52,7 +55,10 @@ export default function QuotationForm() {
     e.preventDefault();
     setError('');
     try {
-      const q = await api.post('/quotations', { customerId, jobType, notes, items, projectId: projectId || undefined, discountPercent });
+      const q = await api.post('/quotations', {
+        customerName, customerEmail, customerPhone, jobType, notes, items, projectId: projectId || undefined, discountPercent,
+        attn, projectLocation, subject, refBy, validUntil: validUntil || undefined, number: number || undefined,
+      });
       navigate(`/quotations/${q.id}`);
     } catch (err) {
       setError(err.message);
@@ -65,12 +71,7 @@ export default function QuotationForm() {
       <div className="card">
         <form onSubmit={handleSubmit}>
           <div className="row">
-            <div>
-              <label>Customer</label>
-              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
+            <div><label>Customer Name</label><input required value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="e.g. Crunch Fitness" /></div>
             <div>
               <label>Job Type</label>
               <select value={jobType} onChange={(e) => setJobType(e.target.value)}>
@@ -78,6 +79,13 @@ export default function QuotationForm() {
                 <option value="fitout">fitout (eligible for completion certificate)</option>
               </select>
             </div>
+          </div>
+          <div className="row">
+            <div><label>Customer Email</label><input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} placeholder="optional" /></div>
+            <div><label>Customer Phone</label><input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="optional" /></div>
+          </div>
+          <div className="row">
+            <div><label>Quotation Number</label><input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="Leave blank to auto-generate" /></div>
           </div>
 
           {code === 'FO' && (
@@ -90,6 +98,16 @@ export default function QuotationForm() {
             </div>
           )}
 
+          <div className="row">
+            <div><label>Attn (contact person)</label><input value={attn} onChange={(e) => setAttn(e.target.value)} placeholder="e.g. Mr. Jafar" /></div>
+            <div><label>{code === 'MP' ? 'Site' : 'Project Location'}</label><input value={projectLocation} onChange={(e) => setProjectLocation(e.target.value)} placeholder="e.g. Dubai" /></div>
+          </div>
+          <div className="row">
+            <div><label>Subject</label><input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Quotation for Fitout Work" /></div>
+            <div><label>Ref By</label><input value={refBy} onChange={(e) => setRefBy(e.target.value)} placeholder="e.g. GD" style={{ width: 100 }} /></div>
+            <div><label>Valid Until</label><input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></div>
+          </div>
+
           <label>Notes</label>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
 
@@ -98,8 +116,9 @@ export default function QuotationForm() {
             <thead>
               <tr>
                 {code === 'MT' && <th>Product</th>}
-                <th>Description</th><th>Qty</th><th>Unit Price</th>
+                <th>Description</th><th>Qty</th><th>Unit</th><th>Unit Price</th>
                 {code === 'DM' && <><th>Size (WxH cm)</th><th>Material</th><th>Finish</th></>}
+                {code === 'MP' && <th>Head Count</th>}
                 <th>Subtotal</th><th></th>
               </tr>
             </thead>
@@ -116,6 +135,7 @@ export default function QuotationForm() {
                   )}
                   <td><input required value={i.description} onChange={(e) => updateItem(idx, 'description', e.target.value)} /></td>
                   <td><input required type="number" step="0.01" value={i.qty} onChange={(e) => updateItem(idx, 'qty', e.target.value)} /></td>
+                  <td><input value={i.unit} onChange={(e) => updateItem(idx, 'unit', e.target.value)} placeholder="LS/NOS/M2" style={{ width: 70 }} /></td>
                   <td><input required type="number" step="0.01" value={i.unitPrice} onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)} /></td>
                   {code === 'DM' && (
                     <>
@@ -126,6 +146,9 @@ export default function QuotationForm() {
                       <td><input value={i.material} onChange={(e) => updateItem(idx, 'material', e.target.value)} placeholder="e.g. Solid Oak" /></td>
                       <td><input value={i.finish} onChange={(e) => updateItem(idx, 'finish', e.target.value)} placeholder="e.g. Matte White" /></td>
                     </>
+                  )}
+                  {code === 'MP' && (
+                    <td><input type="number" step="1" min="0" value={i.workerCount} onChange={(e) => updateItem(idx, 'workerCount', e.target.value)} placeholder="e.g. 10" style={{ width: 70 }} /></td>
                   )}
                   <td>{money((Number(i.qty) || 0) * (Number(i.unitPrice) || 0))}</td>
                   <td>{items.length > 1 && <button type="button" className="btn small secondary" onClick={() => removeItem(idx)}>x</button>}</td>
@@ -141,11 +164,11 @@ export default function QuotationForm() {
           </div>
 
           <div className="totals">
-            Subtotal: {money(subtotal)} (AED) &nbsp;
-            Discount ({Number(discountPercent) || 0}%): -{money(discountAmount)} (AED) &nbsp;
-            After Discount: {money(afterDiscount)} (AED) &nbsp;
-            VAT (5%): {money(vatAmount)} (AED) &nbsp;
-            Total: <strong>{money(totalWithVat)} (AED)</strong>
+            <div className="totals-row"><span>Subtotal</span><span>{money(subtotal)}</span></div>
+            <div className="totals-row"><span>Discount ({Number(discountPercent) || 0}%)</span><span>-{money(discountAmount)}</span></div>
+            <div className="totals-row"><span>After Discount</span><span>{money(afterDiscount)}</span></div>
+            <div className="totals-row"><span>VAT (5%)</span><span>{money(vatAmount)}</span></div>
+            <div className="totals-row grand"><span>Total</span><span>{money(totalWithVat)}</span></div>
           </div>
           {error && <div className="error-msg">{error}</div>}
           <button className="btn" style={{ marginTop: 12 }} type="submit">Create Quotation</button>

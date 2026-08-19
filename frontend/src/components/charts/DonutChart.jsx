@@ -21,23 +21,15 @@ export default function DonutChart({ data, size = 200, strokeWidth = 28 }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
-      <div style={{ position: 'relative', filter: 'drop-shadow(0 0 18px rgba(123, 47, 247, 0.35))' }}>
+      <div style={{ position: 'relative' }}>
         <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" aria-label="Document status breakdown chart">
-          <defs>
-            <linearGradient id="donut-ring" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#7b2ff7" />
-              <stop offset="35%" stopColor="#3d5afe" />
-              <stop offset="70%" stopColor="#ff7a45" />
-              <stop offset="100%" stopColor="#ff3d9a" />
-            </linearGradient>
-          </defs>
-          <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={strokeWidth} />
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="#F0F1F3" strokeWidth={strokeWidth} />
           {total === 0 && (
-            <text x={cx} y={cy + 4} fontSize="12" textAnchor="middle" fill="#857b96">No data</text>
+            <text x={cx} y={cy + 4} fontSize="12" textAnchor="middle" fill="#9ca3af">No data</text>
           )}
           {total > 0 && segments.length <= 1 && (
             <circle
-              cx={cx} cy={cy} r={r} fill="none" stroke="url(#donut-ring)" strokeWidth={strokeWidth}
+              cx={cx} cy={cy} r={r} fill="none" stroke="#FF7A45" strokeWidth={strokeWidth}
             />
           )}
           {segments.map((s) => (
@@ -59,10 +51,10 @@ export default function DonutChart({ data, size = 200, strokeWidth = 28 }) {
               <title>{`${s.label}: ${s.value} (${Math.round(s.frac * 100)}%)`}</title>
             </circle>
           ))}
-          <text x={cx} y={cy - 3} fontSize="22" fontWeight="800" textAnchor="middle" fill="#f5f2f8">
+          <text x={cx} y={cy - 3} fontSize="22" fontWeight="800" textAnchor="middle" fill="#111827">
             {total}
           </text>
-          <text x={cx} y={cy + 15} fontSize="10" textAnchor="middle" fill="#857b96">
+          <text x={cx} y={cy + 15} fontSize="10" textAnchor="middle" fill="#9ca3af">
             invoices
           </text>
         </svg>

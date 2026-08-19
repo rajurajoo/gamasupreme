@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 
 const emptyForm = { name: '', email: '', phone: '', address: '', trn: '' };
@@ -70,7 +71,10 @@ export default function Customers() {
             {customers.map((c) => (
               <tr key={c.id}>
                 <td>{c.name}</td><td>{c.email}</td><td>{c.phone}</td><td>{c.address}</td><td>{c.trn || '-'}</td>
-                <td><button type="button" className="btn secondary" onClick={() => startEdit(c)}>Edit</button></td>
+                <td>
+                  <button type="button" className="btn secondary" onClick={() => startEdit(c)}>Edit</button>
+                  <Link to={`/customers/${c.id}/statement`} className="btn secondary" style={{ marginLeft: 6 }}>Statement</Link>
+                </td>
               </tr>
             ))}
           </tbody>

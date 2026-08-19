@@ -5,7 +5,7 @@ import { api } from '../api';
 export default function Projects() {
   const [projects, setProjects] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [form, setForm] = useState({ name: '', address: '', customerId: '', startDate: '' });
+  const [form, setForm] = useState({ name: '', code: '', address: '', customerId: '', startDate: '' });
   const [error, setError] = useState('');
 
   function load() {
@@ -19,7 +19,7 @@ export default function Projects() {
     setError('');
     try {
       await api.post('/projects', form);
-      setForm({ name: '', address: '', customerId: '', startDate: '' });
+      setForm({ name: '', code: '', address: '', customerId: '', startDate: '' });
       load();
     } catch (err) { setError(err.message); }
   }
@@ -43,6 +43,9 @@ export default function Projects() {
             <div><label>Address</label><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
             <div><label>Start Date</label><input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} /></div>
           </div>
+          <div className="row">
+            <div><label>Project Code (optional, e.g. GTX)</label><input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="e.g. GTX" /></div>
+          </div>
           {error && <div className="error-msg">{error}</div>}
           <button className="btn" style={{ marginTop: 12 }} type="submit">Create Project</button>
         </form>
@@ -50,11 +53,12 @@ export default function Projects() {
 
       <div className="card">
         <table>
-          <thead><tr><th>Name</th><th>Client</th><th>Address</th><th>Progress</th><th></th></tr></thead>
+          <thead><tr><th>Name</th><th>Code</th><th>Client</th><th>Address</th><th>Progress</th><th></th></tr></thead>
           <tbody>
             {projects.map((p) => (
               <tr key={p.id}>
                 <td>{p.name}</td>
+                <td>{p.code || '-'}</td>
                 <td>{p.customer?.name || '-'}</td>
                 <td>{p.address || '-'}</td>
                 <td>{p.progress}%</td>

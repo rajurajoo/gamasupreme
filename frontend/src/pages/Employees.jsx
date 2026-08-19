@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { money } from '../format';
 
@@ -57,7 +58,10 @@ export default function Employees() {
                 <td>{e.name}</td><td>{e.position}</td><td>{money(e.monthlySalary)}</td>
                 <td>{e.bankName ? `${e.bankName} - ${e.bankAccount}` : '-'}</td>
                 <td>{e.active ? 'Active' : 'Inactive'}</td>
-                <td><button className="btn small secondary" onClick={() => toggleActive(e)}>{e.active ? 'Deactivate' : 'Activate'}</button></td>
+                <td>
+                  <Link to={`/employees/${e.id}`} className="btn small secondary">View</Link>
+                  <button className="btn small secondary" style={{ marginLeft: 6 }} onClick={() => toggleActive(e)}>{e.active ? 'Deactivate' : 'Activate'}</button>
+                </td>
               </tr>
             ))}
           </tbody>

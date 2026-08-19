@@ -1,10 +1,27 @@
 const express = require('express');
 const prisma = require('../db');
 const { requireAuth, requireRole } = require('../middleware/auth');
+const { getAttendanceSummary } = require('./attendance');
 
 const router = express.Router();
 router.use(requireAuth);
 router.use(requireRole('admin', 'accountant'));
+
+// Active employees for the "Run Monthly Payroll" form, each with a
+// suggestedDeduction computed from that month's attendance (absences/half
+// days). This is only a suggestion - the actual run still takes whatever
+// deductions the caller submits via POST /.
+router.get('/run/:month', async (req, res) => {
+  const { month } = req.params;
+  const employees = await prisma.employee.findMany({ where: { active: true }, orderBy: { name: 'asc' } });
+  const rows = await Promise.all(employees.map(async (e) => {
+    const summary = await getAttendanceSummary(prisma, e.id, month);
+    const dailyRate = e.monthlySalary / 30;
+    const suggestedDeduction = (summary.absentDays * dailyRate) + (summary.halfDays * dailyRate * 0.5);
+    return { ...e, attendanceSummary: summary, suggestedDeduction: Math.round(suggestedDeduction * 100) / 100 };
+  }));
+  res.json(rows);
+});
 
 router.get('/', async (req, res) => {
   const runs = await prisma.payrollRun.findMany({

@@ -30,12 +30,12 @@ export default function Reports() {
         <div className="card print-view">
           <h3>Report for {report.month}</h3>
           <div className="report-grid">
-            <div className="report-tile"><div className="label">Invoices Issued</div><div className="value">{report.invoiceCount}</div></div>
-            <div className="report-tile"><div className="label">Total Sales</div><div className="value">{money(report.totalSales)}</div></div>
-            <div className="report-tile"><div className="label">Total Collected</div><div className="value">{money(report.totalCollected)}</div></div>
-            <div className="report-tile"><div className="label">Outstanding</div><div className="value">{money(report.outstanding)}</div></div>
-            <div className="report-tile"><div className="label">Payroll Cost</div><div className="value">{money(report.totalPayrollCost)}</div></div>
-            <div className="report-tile"><div className="label">Net Summary</div><div className="value">{money(report.netSummary)}</div></div>
+            <div className="report-tile"><div className="tile-body"><div className="label">Invoices Issued</div><div className="value">{report.invoiceCount}</div></div></div>
+            <div className="report-tile"><div className="tile-body"><div className="label">Total Sales</div><div className="value">{money(report.totalSales)}</div></div></div>
+            <div className="report-tile"><div className="tile-body"><div className="label">Total Collected</div><div className="value">{money(report.totalCollected)}</div></div></div>
+            <div className="report-tile"><div className="tile-body"><div className="label">Outstanding</div><div className="value">{money(report.outstanding)}</div></div></div>
+            <div className="report-tile"><div className="tile-body"><div className="label">Payroll Cost</div><div className="value">{money(report.totalPayrollCost)}</div></div></div>
+            <div className="report-tile"><div className="tile-body"><div className="label">Net Summary</div><div className="value">{money(report.netSummary)}</div></div></div>
           </div>
           <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
             Net summary = total collected - total payroll cost for the month (payroll is shared across all businesses). Total sales reflects invoices issued in the period regardless of payment status.

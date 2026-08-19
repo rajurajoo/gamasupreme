@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const authRoutes = require('./routes/auth');
 const customerRoutes = require('./routes/customers');
@@ -18,11 +19,21 @@ const productRoutes = require('./routes/products');
 const supplierRoutes = require('./routes/suppliers');
 const purchaseOrderRoutes = require('./routes/purchaseOrders');
 const dashboardRoutes = require('./routes/dashboard');
+const attendanceRoutes = require('./routes/attendance');
+const lpoRoutes = require('./routes/lpo');
+const pettyCashRoutes = require('./routes/pettyCash');
+const jobOrderRoutes = require('./routes/jobOrders');
+const leadRoutes = require('./routes/leads');
+const accountRoutes = require('./routes/accounts');
+const journalEntryRoutes = require('./routes/journalEntries');
+const vehicleRoutes = require('./routes/vehicles');
+const statementOfAccountRoutes = require('./routes/statementsOfAccount');
 
 const app = express();
 const allowedOrigin = process.env.ALLOWED_ORIGIN || '*';
 app.use(cors({ origin: allowedOrigin }));
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
@@ -42,6 +53,15 @@ app.use('/api/products', productRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/purchase-orders', purchaseOrderRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/lpos', lpoRoutes);
+app.use('/api/petty-cash', pettyCashRoutes);
+app.use('/api/job-orders', jobOrderRoutes);
+app.use('/api/leads', leadRoutes);
+app.use('/api/accounts', accountRoutes);
+app.use('/api/journal-entries', journalEntryRoutes);
+app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/statements-of-account', statementOfAccountRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

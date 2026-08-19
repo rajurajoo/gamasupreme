@@ -12,7 +12,10 @@ export default function Invoices() {
   return (
     <div>
       <h1>Invoices</h1>
-      <p>Invoices are created from an accepted quotation - open a quotation to convert it.</p>
+      <p>Invoices are created from an accepted quotation, or you can create one manually.</p>
+      <div className="actions-bar" style={{ marginBottom: 14 }}>
+        <Link className="btn" to="/invoices/new">+ New Invoice</Link>
+      </div>
       <div className="card">
         <table>
           <thead><tr><th>Number</th><th>Customer</th><th>Total</th><th>Balance</th><th>Due</th><th>Status</th><th></th></tr></thead>
@@ -20,7 +23,7 @@ export default function Invoices() {
             {invoices.map((i) => (
               <tr key={i.id}>
                 <td>{i.number}</td>
-                <td>{i.quotation.customer.name}</td>
+                <td>{(i.customer || i.quotation?.customer)?.name}</td>
                 <td>{money(i.totalWithVat)}</td>
                 <td>{money(i.balance)}</td>
                 <td>{new Date(i.dueDate).toLocaleDateString()}</td>

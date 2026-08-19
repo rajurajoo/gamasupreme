@@ -17,7 +17,7 @@ export default function DeliveryOrderDetail() {
   function load() { api.get(`/delivery-orders/${id}`).then(setDoc); }
   useEffect(load, [id]);
 
-  const isFitout = doc?.invoice.quotation.jobType === 'fitout';
+  const isFitout = doc?.invoice.quotation?.jobType === 'fitout';
 
   async function convertToCC(e) {
     e.preventDefault();
@@ -29,7 +29,7 @@ export default function DeliveryOrderDetail() {
   }
 
   if (!doc) return <div>Loading...</div>;
-  const customer = doc.invoice.quotation.customer;
+  const customer = doc.invoice.customer || doc.invoice.quotation?.customer;
 
   return (
     <div className="print-view">

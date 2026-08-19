@@ -11,17 +11,36 @@ function withTotals(inv) {
   const discountPercent = inv.discountPercent != null ? inv.discountPercent : 0;
   const discountAmount = Math.round(subtotal * (discountPercent / 100) * 100) / 100;
   const afterDiscount = Math.round((subtotal - discountAmount) * 100) / 100;
+
+  const deductionLines = (inv.deductions || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => {
+      const [label, pctStr] = l.split('|').map((s) => (s || '').trim());
+      const percent = Number(pctStr) || 0;
+      const amount = Math.round(subtotal * (percent / 100) * 100) / 100;
+      return { label, percent, amount };
+    });
+  const deductionsTotal = Math.round(deductionLines.reduce((sum, d) => sum + d.amount, 0) * 100) / 100;
+  const afterDeductions = Math.round((afterDiscount - deductionsTotal) * 100) / 100;
+
   const vatRate = inv.vatRate != null ? inv.vatRate : 5;
-  const vatAmount = Math.round(afterDiscount * (vatRate / 100) * 100) / 100;
-  const totalWithVat = Math.round((afterDiscount + vatAmount) * 100) / 100;
+  const vatAmount = Math.round(afterDeductions * (vatRate / 100) * 100) / 100;
+  const totalWithVat = Math.round((afterDeductions + vatAmount) * 100) / 100;
   const balance = totalWithVat - inv.amountPaid;
   // total kept for backward compatibility (== subtotal)
-  return { ...inv, subtotal, total: subtotal, discountPercent, discountAmount, afterDiscount, vatRate, vatAmount, totalWithVat, balance };
+  return {
+    ...inv, subtotal, total: subtotal, discountPercent, discountAmount, afterDiscount,
+    deductionLines, deductionsTotal, afterDeductions,
+    vatRate, vatAmount, totalWithVat, balance,
+  };
 }
 
 const include = {
   items: { include: { product: true } },
   quotation: { include: { customer: true } },
+  customer: true,
   project: true,
   business: true,
 };
@@ -42,6 +61,70 @@ router.get('/:id', async (req, res) => {
   });
   if (!inv) return res.status(404).json({ error: 'Not found' });
   res.json(withTotals(inv));
+});
+
+// Create a standalone invoice manually (no source quotation required).
+router.post('/', requireBusiness, requireRole('admin', 'sales_staff'), async (req, res) => {
+  const {
+    customerId, customerName, customerEmail, customerPhone,
+    items, projectId, discountPercent, dueDate,
+    subject, modeOfPayment, validUntil, deductions, site, number: customNumber,
+  } = req.body;
+  if ((!customerId && !customerName) || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'customerName and at least one item required' });
+  }
+  if (!dueDate) return res.status(400).json({ error: 'dueDate required' });
+  const business = await prisma.business.findUnique({ where: { id: req.businessId } });
+  if (!business) return res.status(400).json({ error: 'Invalid business' });
+
+  if (customNumber && customNumber.trim()) {
+    const existing = await prisma.invoice.findUnique({ where: { number: customNumber.trim() } });
+    if (existing) return res.status(400).json({ error: 'An invoice with this number already exists' });
+  }
+
+  const invoice = await prisma.$transaction(async (tx) => {
+    let resolvedCustomerId = customerId ? Number(customerId) : null;
+    if (!resolvedCustomerId) {
+      let customer = await tx.customer.findFirst({ where: { name: customerName } });
+      if (!customer) {
+        customer = await tx.customer.create({
+          data: { name: customerName, email: customerEmail || null, phone: customerPhone || null },
+        });
+      }
+      resolvedCustomerId = customer.id;
+    }
+    const number = customNumber && customNumber.trim() ? customNumber.trim() : await nextDocNumber(tx, `INV-${business.code}`);
+    return tx.invoice.create({
+      data: {
+        number,
+        businessId: business.id,
+        customerId: resolvedCustomerId,
+        projectId: projectId ? Number(projectId) : null,
+        dueDate: new Date(dueDate),
+        discountPercent: discountPercent != null && discountPercent !== '' ? Number(discountPercent) : 0,
+        subject: subject || null,
+        modeOfPayment: modeOfPayment || null,
+        validUntil: validUntil ? new Date(validUntil) : null,
+        deductions: deductions || null,
+        site: site || null,
+        items: {
+          create: items.map((i) => ({
+            description: i.description,
+            qty: Number(i.qty),
+            unitPrice: Number(i.unitPrice),
+            doorWidth: i.doorWidth != null && i.doorWidth !== '' ? Number(i.doorWidth) : null,
+            doorHeight: i.doorHeight != null && i.doorHeight !== '' ? Number(i.doorHeight) : null,
+            material: i.material || null,
+            finish: i.finish || null,
+            workerCount: i.workerCount != null && i.workerCount !== '' ? Number(i.workerCount) : null,
+            productId: i.productId ? Number(i.productId) : null,
+          })),
+        },
+      },
+      include,
+    });
+  });
+  res.status(201).json(withTotals(invoice));
 });
 
 // Create an invoice FROM an accepted quotation - percentage-based milestone billing.
@@ -108,6 +191,7 @@ router.post('/from-quotation/:quotationId', requireRole('admin', 'sales_staff'),
         dueDate: new Date(dueDate),
         discountPercent: 0,
         percentOfQuotation: percent,
+        termsAndConditions: quotation.termsAndConditions || null,
         items: {
           create: [{
             description: `Progress billing — ${percent}% of ${quotation.number}`,
@@ -136,12 +220,32 @@ router.post('/from-quotation/:quotationId', requireRole('admin', 'sales_staff'),
   res.status(201).json(withTotals(invoice));
 });
 
-// Record a payment / change status.
+// Record a payment / change status / update terms.
 router.put('/:id', requireRole('admin', 'sales_staff', 'accountant'), async (req, res) => {
-  const { status, amountPaid } = req.body;
+  const {
+    status, amountPaid, termsAndConditions, showWatermark,
+    subject, modeOfPayment, validUntil, deductions, site, number,
+  } = req.body;
+  if (number !== undefined && number.trim()) {
+    const existing = await prisma.invoice.findUnique({ where: { number: number.trim() } });
+    if (existing && existing.id !== Number(req.params.id)) {
+      return res.status(400).json({ error: 'An invoice with this number already exists' });
+    }
+  }
   const inv = await prisma.invoice.update({
     where: { id: Number(req.params.id) },
-    data: { status, amountPaid: amountPaid != null ? Number(amountPaid) : undefined },
+    data: {
+      status,
+      amountPaid: amountPaid != null ? Number(amountPaid) : undefined,
+      termsAndConditions,
+      showWatermark: showWatermark !== undefined ? Boolean(showWatermark) : undefined,
+      subject: subject !== undefined ? subject : undefined,
+      modeOfPayment: modeOfPayment !== undefined ? modeOfPayment : undefined,
+      validUntil: validUntil !== undefined ? (validUntil ? new Date(validUntil) : null) : undefined,
+      deductions: deductions !== undefined ? deductions : undefined,
+      site: site !== undefined ? site : undefined,
+      number: number !== undefined && number.trim() ? number.trim() : undefined,
+    },
     include,
   });
   res.json(withTotals(inv));

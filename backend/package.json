@@ -5,10 +5,10 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon --watch src --exec node src/index.js",
-    "start": "npx prisma migrate deploy && node src/index.js",
+    "start": "npx prisma db push --skip-generate --accept-data-loss && node src/index.js",
+    "postinstall": "prisma generate",
     "seed": "node prisma/seed.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev --name init"
+    "prisma:generate": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
@@ -16,7 +16,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.2.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",

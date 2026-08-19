@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
+import logoIcon from '../assets/logo-icon.png';
 
 export default function Login() {
   const [email, setEmail] = useState('admin@gamasupreme.com');
@@ -23,6 +24,7 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-box">
+        <img className="login-logo" src={logoIcon} alt="Gama Supreme" />
         <h1>GAMA SUPREME</h1>
         <form onSubmit={handleSubmit}>
           <label>Email</label>

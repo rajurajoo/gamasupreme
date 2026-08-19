@@ -34,7 +34,7 @@ router.post('/from-delivery-order/:deliveryOrderId', requireRole('admin', 'sales
     include: { invoice: { include: { quotation: true } }, business: true },
   });
   if (!deliveryOrder) return res.status(404).json({ error: 'Delivery order not found' });
-  if (deliveryOrder.invoice.quotation.jobType !== 'fitout') {
+  if (!deliveryOrder.invoice.quotation || deliveryOrder.invoice.quotation.jobType !== 'fitout') {
     return res.status(400).json({ error: 'Completion certificates only apply to fitout jobs' });
   }
 

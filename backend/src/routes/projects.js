@@ -33,12 +33,13 @@ router.get('/:id', async (req, res) => {
 });
 
 router.post('/', requireBusiness, requireRole('admin', 'sales_staff'), async (req, res) => {
-  const { name, address, customerId, startDate } = req.body;
+  const { name, code, address, customerId, startDate } = req.body;
   if (!name) return res.status(400).json({ error: 'name required' });
   const project = await prisma.project.create({
     data: {
       businessId: req.businessId,
       name,
+      code: code || null,
       address,
       customerId: customerId ? Number(customerId) : null,
       startDate: startDate ? new Date(startDate) : null,
@@ -51,6 +52,19 @@ router.post('/', requireBusiness, requireRole('admin', 'sales_staff'), async (re
     include,
   });
   res.status(201).json(withProgress(project));
+});
+
+// Edit project fields (name/code/address/customer/startDate).
+router.put('/:id', requireRole('admin', 'sales_staff'), async (req, res) => {
+  const { name, code, address, customerId, startDate } = req.body;
+  const data = {};
+  if (name !== undefined) data.name = name;
+  if (code !== undefined) data.code = code || null;
+  if (address !== undefined) data.address = address;
+  if (customerId !== undefined) data.customerId = customerId ? Number(customerId) : null;
+  if (startDate !== undefined) data.startDate = startDate ? new Date(startDate) : null;
+  const project = await prisma.project.update({ where: { id: Number(req.params.id) }, data, include });
+  res.json(withProgress(project));
 });
 
 // Add a milestone.

@@ -7,8 +7,10 @@ import { useBusiness } from '../BusinessContext';
 import LineAreaChart from '../components/charts/LineAreaChart';
 import BarChart from '../components/charts/BarChart';
 import DonutChart from '../components/charts/DonutChart';
+import logoIcon from '../assets/logo-icon.png';
+import heroBg from '../assets/dashboard-hero-bg.jpg';
 
-const STATUS_COLORS = { unpaid: '#fbbf24', partial: '#7c9bff', paid: '#34d399' };
+const STATUS_COLORS = { unpaid: '#b45309', partial: '#2563eb', paid: '#16a34a' };
 
 function tileIcon(path) {
   return (
@@ -60,8 +62,21 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h1>Welcome, {user.name}</h1>
-      {activeBusiness && <p style={{ color: 'var(--text-secondary)', marginTop: -10 }}>Active business: <strong>{activeBusiness.name}</strong></p>}
+      <div className="dashboard-hero">
+        <div className="dashboard-hero-bg" style={{ backgroundImage: `url(${heroBg})` }} />
+        <div className="dashboard-hero-overlay" />
+        <div className="dashboard-hero-text">
+          <h1>Welcome, {user.name}</h1>
+          <p>
+            {activeBusiness ? <>Active business: <strong style={{ color: '#fff' }}>{activeBusiness.name}</strong></> : 'Select a business to get started'}
+          </p>
+          <div className="dashboard-hero-badge">
+            <img src={logoIcon} alt="" />
+            GAMA SUPREME TECHNICAL SERVICES
+          </div>
+        </div>
+        <img className="dashboard-hero-logo-fg" src={logoIcon} alt="Gama Supreme" />
+      </div>
       {counts ? (
         <div className="report-grid">
           <Link to="/quotations" className="card report-tile">
@@ -85,7 +100,7 @@ export default function Dashboard() {
               <div className="label">Delivery Orders</div>
             </div>
           </Link>
-          <div className="card report-tile">
+          <div className="card report-tile tile-accent">
             {TILE_ICONS.cash}
             <div className="tile-body">
               <div className="value">{money(counts.outstanding)}</div>

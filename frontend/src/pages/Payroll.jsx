@@ -12,9 +12,16 @@ export default function Payroll() {
 
   function load() {
     api.get('/payroll').then(setRuns);
-    api.get('/employees').then((es) => setEmployees(es.filter((e) => e.active)));
+    api.get(`/payroll/run/${month}`).then((es) => {
+      setEmployees(es);
+      const prefill = {};
+      es.forEach((emp) => {
+        if (emp.suggestedDeduction) prefill[emp.id] = { deductions: emp.suggestedDeduction };
+      });
+      setAdjustments(prefill);
+    });
   }
-  useEffect(load, []);
+  useEffect(load, [month]);
 
   function updateAdj(empId, field, value) {
     setAdjustments({ ...adjustments, [empId]: { ...adjustments[empId], [field]: value } });
@@ -53,7 +60,14 @@ export default function Payroll() {
                 <tr key={emp.id}>
                   <td>{emp.name}</td>
                   <td>{money(emp.monthlySalary)}</td>
-                  <td><input type="number" step="0.01" value={adjustments[emp.id]?.deductions || ''} onChange={(e) => updateAdj(emp.id, 'deductions', e.target.value)} /></td>
+                  <td>
+                    <input type="number" step="0.01" value={adjustments[emp.id]?.deductions || ''} onChange={(e) => updateAdj(emp.id, 'deductions', e.target.value)} />
+                    {emp.suggestedDeduction > 0 && (
+                      <div className="hint" style={{ margin: '4px 0 0', textAlign: 'left' }}>
+                        Suggested: {money(emp.suggestedDeduction)} ({emp.attendanceSummary.absentDays} absent, {emp.attendanceSummary.halfDays} half days)
+                      </div>
+                    )}
+                  </td>
                   <td><input type="number" step="0.01" value={adjustments[emp.id]?.bonuses || ''} onChange={(e) => updateAdj(emp.id, 'bonuses', e.target.value)} /></td>
                 </tr>
               ))}

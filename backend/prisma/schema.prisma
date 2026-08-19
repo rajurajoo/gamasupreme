@@ -33,6 +33,19 @@ model Business {
   trn       String? // UAE Tax Registration Number (15 digits), for FTA e-invoicing
   createdAt DateTime @default(now())
 
+  // Static company details shown on official documents (quotations etc.)
+  email               String?
+  website             String?
+  phone               String?
+  bankName            String?
+  bankAccountTitle    String?
+  bankCifNumber       String?
+  bankAccountNumber   String?
+  bankIban            String?
+  authorizedRepName        String?
+  authorizedRepDesignation String?
+  authorizedRepContact     String?
+
   quotations             Quotation[]
   invoices               Invoice[]
   deliveryOrders         DeliveryOrder[]
@@ -40,6 +53,10 @@ model Business {
   projects               Project[]
   products               Product[]
   purchaseOrders         PurchaseOrder[]
+  lpos                   LPO[]
+  jobOrders              JobOrder[]
+  journalEntries         JournalEntry[]
+  statementsOfAccount    StatementOfAccount[]
 }
 
 model Customer {
@@ -51,8 +68,12 @@ model Customer {
   trn       String? // UAE Tax Registration Number (15 digits), optional - not all customers are VAT-registered
   createdAt DateTime @default(now())
 
-  quotations Quotation[]
-  projects   Project[]
+  quotations           Quotation[]
+  invoices             Invoice[]
+  projects             Project[]
+  jobOrders            JobOrder[]
+  leads                Lead[]
+  statementsOfAccount  StatementOfAccount[]
 }
 
 model Employee {
@@ -65,7 +86,70 @@ model Employee {
   active        Boolean  @default(true)
   createdAt     DateTime @default(now())
 
+  // Personal details
+  dateOfBirth String?
+  nationality String?
+  address     String?
+
+  // UAE ID / Passport / Visa
+  idNumber       String? // Emirates ID number
+  passportNumber String?
+  visaNumber     String?
+  visaExpiryDate String?
+
+  // Emergency contact
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
   payrollItems PayrollItem[]
+  attendance   Attendance[]
+  pettyCashTransactions PettyCashTransaction[]
+  jobOrders    JobOrder[]
+  leads        Lead[]
+  documents    EmployeeDocument[]
+  vehiclesAssigned Vehicle[]
+  vehicleLogsDriven VehicleLog[]
+}
+
+model EmployeeDocument {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  label      String // e.g. "Emirates ID" | "Passport" | "Visa" | "Contract" | "Certificate" | "Other"
+  fileName   String // original uploaded filename
+  filePath   String // path on disk under backend/uploads/employees/
+  uploadedAt DateTime @default(now())
+}
+
+// HR fleet management: company vehicles + a trip log book per vehicle.
+// Shared across all businesses (company-wide, not business-scoped).
+model Vehicle {
+  id           Int      @id @default(autoincrement())
+  plateNumber  String   @unique
+  makeModel    String
+  year         String?
+  assignedToId Int?
+  assignedTo   Employee? @relation(fields: [assignedToId], references: [id])
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  logs VehicleLog[]
+}
+
+model VehicleLog {
+  id            Int      @id @default(autoincrement())
+  vehicleId     Int
+  vehicle       Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  driverId      Int?
+  driver        Employee? @relation(fields: [driverId], references: [id])
+  date          DateTime @default(now())
+  purpose       String?
+  destination   String?
+  odometerStart Float?
+  odometerEnd   Float?
+  fuelCost      Float?
+  notes         String?
+  createdAt     DateTime @default(now())
 }
 
 // Interior Fit-out projects. Quotations/Invoices/DOs/Certificates for the
@@ -75,17 +159,21 @@ model Project {
   businessId Int
   business   Business  @relation(fields: [businessId], references: [id])
   name       String
+  code       String?
   address    String?
   customerId Int?
   customer   Customer? @relation(fields: [customerId], references: [id])
   startDate  DateTime?
   createdAt  DateTime  @default(now())
 
-  milestones             Milestone[]
-  quotations             Quotation[]
-  invoices               Invoice[]
-  deliveryOrders         DeliveryOrder[]
-  completionCertificates CompletionCertificate[]
+  milestones              Milestone[]
+  quotations              Quotation[]
+  invoices                Invoice[]
+  deliveryOrders          DeliveryOrder[]
+  completionCertificates  CompletionCertificate[]
+  lpos                    LPO[]
+  jobOrders               JobOrder[]
+  statementsOfAccount     StatementOfAccount[]
 }
 
 model Milestone {
@@ -165,10 +253,32 @@ model Quotation {
   jobStage        String?  @default("Measurement")
   discountPercent Float    @default(0)
   vatRate         Float    @default(5) // UAE standard VAT rate (%), for FTA e-invoicing prep
+  termsAndConditions String?
+  showWatermark      Boolean  @default(false)
+
+  // Full formal quotation header/footer fields, matching the client's real
+  // printed quotation format (REF NO/BY, attn, exclusions, payment terms, etc.)
+  refBy           String? // e.g. "GD" - initials of preparer
+  validUntil      DateTime?
+  attn            String? // attention person at the customer
+  projectLocation String?
+  subject         String? // e.g. "QUOTATION FOR FITOUT WORK"
+  exclusions      String? // multi-line list, one item per line
+  paymentTerms    String? // multi-line list, one item per line
+  durationOfWork  String? // e.g. "60 Days after receiving the advance"
+
   createdAt       DateTime @default(now())
 
-  items    QuotationItem[]
-  invoices Invoice[]
+  // Revisions: revisionOfId points to the ORIGINAL quotation (revisionNumber 0).
+  // A revised copy gets number "<original number>-R<revisionNumber>".
+  revisionOfId   Int?
+  revisionOf     Quotation?  @relation("QuotationRevisions", fields: [revisionOfId], references: [id])
+  revisions      Quotation[] @relation("QuotationRevisions")
+  revisionNumber Int         @default(0)
+
+  items     QuotationItem[]
+  invoices  Invoice[]
+  jobOrders JobOrder[]
 }
 
 model QuotationItem {
@@ -177,12 +287,15 @@ model QuotationItem {
   quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
   description String
   qty         Float
+  unit        String? // e.g. "LS", "NOS", "M2"
   unitPrice   Float
   // Door Manufacturing specs (optional - only used when business = Door Manufacturing).
   doorWidth   Float?
   doorHeight  Float?
   material    String?
   finish      String?
+  // Manpower Supply specs (optional - only used when business = Manpower Supply).
+  workerCount Int?
   // Material Trading catalog link (optional - only used when business = Material Trading).
   productId   Int?
   product     Product?  @relation(fields: [productId], references: [id])
@@ -193,9 +306,10 @@ model Invoice {
   number      String    @unique // INV-DM-2026-001
   businessId  Int
   business    Business  @relation(fields: [businessId], references: [id])
-  quotationId Int
-  quotation   Quotation @relation(fields: [quotationId], references: [id])
+  quotationId Int?
+  quotation   Quotation? @relation(fields: [quotationId], references: [id])
   customerId  Int
+  customer    Customer  @relation(fields: [customerId], references: [id])
   projectId   Int?
   project     Project?  @relation(fields: [projectId], references: [id])
   status      String    @default("unpaid") // "unpaid" | "partial" | "paid"
@@ -204,6 +318,13 @@ model Invoice {
   vatRate     Float     @default(5) // UAE standard VAT rate (%), for FTA e-invoicing prep
   discountPercent Float @default(0) // carried over from the source quotation, applied to subtotal before VAT
   percentOfQuotation Float? // when set, this invoice bills this % of the quotation's after-discount subtotal (milestone/progress billing). Null = legacy full invoice.
+  termsAndConditions String?
+  showWatermark      Boolean  @default(false)
+  subject         String?
+  modeOfPayment   String?
+  validUntil      DateTime?
+  deductions      String? // one per line, "Label|Percent" e.g. "Less Advance|30" — applied against the item subtotal before VAT
+  site            String? // deployment site (optional - only used when business = Manpower Supply)
   createdAt   DateTime  @default(now())
 
   items          InvoiceItem[]
@@ -221,6 +342,7 @@ model InvoiceItem {
   doorHeight  Float?
   material    String?
   finish      String?
+  workerCount Int?
   productId   Int?
   product     Product? @relation(fields: [productId], references: [id])
 }
@@ -267,6 +389,21 @@ model CompletionCertificate {
   createdAt        DateTime      @default(now())
 }
 
+model StatementOfAccount {
+  id             Int       @id @default(autoincrement())
+  number         String    @unique // SOA-FO-2026-001
+  businessId     Int
+  business       Business  @relation(fields: [businessId], references: [id])
+  projectId      Int
+  project        Project   @relation(fields: [projectId], references: [id])
+  customerId     Int
+  customer       Customer  @relation(fields: [customerId], references: [id])
+  modeOfPayment  String?
+  validUntil     DateTime?
+  showWatermark  Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+}
+
 model PayrollRun {
   id        Int      @id @default(autoincrement())
   month     String   // "YYYY-MM"
@@ -289,10 +426,172 @@ model PayrollItem {
   netPay       Float
 }
 
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id])
+  date       DateTime // stored as date, one record per employee per day
+  status     String   // "present" | "absent" | "leave" | "half_day"
+  timeIn     String?  // "HH:MM", optional check-in time
+  timeOut    String?  // "HH:MM", optional check-out time
+  createdAt  DateTime @default(now())
+
+  @@unique([employeeId, date])
+}
+
+// Petty cash: an "advance" gives a person a lump sum; each "expense" against
+// that person reduces their running balance. Balance is computed on the fly
+// (sum of advances minus sum of expenses for that employee+business), not stored.
+// Internal work order created from an accepted quotation - assigns the job
+// to staff and tracks production/execution progress. Not sent to customers.
+model JobOrder {
+  id           Int       @id @default(autoincrement())
+  number       String    @unique // JO-DM-2026-001
+  businessId   Int
+  business     Business  @relation(fields: [businessId], references: [id])
+  quotationId  Int
+  quotation    Quotation @relation(fields: [quotationId], references: [id])
+  customerId   Int
+  customer     Customer  @relation(fields: [customerId], references: [id])
+  projectId    Int?
+  project      Project?  @relation(fields: [projectId], references: [id])
+  assignedToId Int?
+  assignedTo   Employee? @relation(fields: [assignedToId], references: [id])
+  status       String    @default("pending") // "pending" | "in-progress" | "completed"
+  dueDate      DateTime?
+  notes        String?
+  createdAt    DateTime  @default(now())
+
+  items JobOrderItem[]
+}
+
+model JobOrderItem {
+  id          Int      @id @default(autoincrement())
+  jobOrderId  Int
+  jobOrder    JobOrder @relation(fields: [jobOrderId], references: [id], onDelete: Cascade)
+  description String
+  qty         Float
+}
+
+// Double-entry bookkeeping. The Chart of Accounts is shared across all
+// businesses; each JournalEntry is tagged to one business, but the
+// accounting screens show a combined cross-business view by default.
+model Account {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique // e.g. "1000"
+  name      String // e.g. "Cash"
+  type      String // "asset" | "liability" | "equity" | "income" | "expense"
+  createdAt DateTime @default(now())
+
+  journalLines JournalLine[]
+}
+
+model JournalEntry {
+  id          Int      @id @default(autoincrement())
+  businessId  Int
+  business    Business @relation(fields: [businessId], references: [id])
+  date        DateTime @default(now())
+  reference   String?
+  description String?
+  createdAt   DateTime @default(now())
+
+  lines JournalLine[]
+}
+
+model JournalLine {
+  id             Int          @id @default(autoincrement())
+  journalEntryId Int
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  accountId      Int
+  account        Account      @relation(fields: [accountId], references: [id])
+  debit          Float        @default(0)
+  credit         Float        @default(0)
+}
+
+// Sales CRM: leads pipeline, shared across all businesses (not business-scoped).
+// A lead can be converted into a Customer + draft Quotation once qualified.
+model Lead {
+  id               Int       @id @default(autoincrement())
+  name             String
+  company          String?
+  email            String?
+  phone            String?
+  source           String? // e.g. "referral" | "website" | "walk-in" | "other"
+  stage            String    @default("new") // "new" | "contacted" | "qualified" | "won" | "lost"
+  assignedToId     Int?
+  assignedTo       Employee? @relation(fields: [assignedToId], references: [id])
+  nextFollowUpDate DateTime?
+  notes            String?
+  customerId       Int? // set once converted
+  customer         Customer? @relation(fields: [customerId], references: [id])
+  createdAt        DateTime  @default(now())
+
+  activities LeadActivity[]
+}
+
+model LeadActivity {
+  id        Int      @id @default(autoincrement())
+  leadId    Int
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type      String // "call" | "meeting" | "note" | "email"
+  notes     String
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+}
+
+// Petty cash is shared across all businesses (not business-scoped) - a
+// person's advance/balance is the same regardless of which business is active.
+model PettyCashTransaction {
+  id          Int      @id @default(autoincrement())
+  employeeId  Int
+  employee    Employee @relation(fields: [employeeId], references: [id])
+  type        String   // "advance" | "expense"
+  amount      Float
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
 // Tracks the next sequence number per document type per year, so
 // document numbers stay sequential and gapless even with concurrent creates.
 // The "prefix" already embeds the business code (e.g. "INV-DM"), which gives
 // each business its own independent number series for free.
+// LPO (Local Purchase Order) - UAE standard format, per-Project, works across
+// all three businesses (unlike Project which historically was Fit-out only).
+model LPO {
+  id              Int      @id @default(autoincrement())
+  projectId       Int
+  project         Project  @relation(fields: [projectId], references: [id])
+  businessId      Int
+  business        Business @relation(fields: [businessId], references: [id])
+  serial          String   // user-typed part, e.g. "P01"
+  number          String   @unique // "LPO-{project.code or project.id}-{year}/({serial})"
+  supplierName    String
+  supplierContact String?
+  date            DateTime @default(now())
+  deliveryAddress String?
+  paymentTerms    String?
+  notes           String?
+  deliveryDate    DateTime?
+  vatRate         Float    @default(5)
+  termsAndConditions String?
+  showWatermark      Boolean  @default(false)
+  status          String   @default("draft") // "draft" | "issued" | "completed"
+  createdAt       DateTime @default(now())
+
+  items LPOItem[]
+}
+
+model LPOItem {
+  id          Int    @id @default(autoincrement())
+  lpoId       Int
+  lpo         LPO    @relation(fields: [lpoId], references: [id], onDelete: Cascade)
+  description String
+  qty         Float
+  unit        String?
+  unitRate    Float
+}
+
 model DocumentSequence {
   id     Int    @id @default(autoincrement())
   prefix String // "QT-DM", "INV-FO", "DO-MT", "CC-FO", "PO-MT"
